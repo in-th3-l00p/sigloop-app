@@ -1,6 +1,7 @@
 import { usePrivy } from "@privy-io/react-auth"
 import { useConvexAuth } from "convex/react"
 import { Navigate } from "react-router-dom"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 export default function DashboardPage() {
   const { logout } = usePrivy()
@@ -23,12 +24,15 @@ export default function DashboardPage() {
       <div className="mx-auto max-w-4xl">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">Dashboard</h1>
-          <button
-            onClick={logout}
-            className="cursor-pointer text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Sign Out
-          </button>
+          <div className="flex items-center gap-4">
+            <ThemeToggle />
+            <button
+              onClick={logout}
+              className="cursor-pointer text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Sign Out
+            </button>
+          </div>
         </div>
       </div>
     </div>
