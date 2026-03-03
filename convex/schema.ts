@@ -14,4 +14,10 @@ export default defineSchema({
   })
     .index("by_user", ["userId"])
     .index("by_address", ["address"]),
+
+  contacts: defineTable({
+    userId: v.string(),
+    name: v.string(),
+    address: v.string(),
+  }).index("by_user", ["userId"]),
 })

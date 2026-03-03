@@ -10,6 +10,7 @@
 
 import type * as accounts_smartAccounts from "../accounts/smartAccounts.js";
 import type * as auth from "../auth.js";
+import type * as contacts_contacts from "../contacts/contacts.js";
 
 import type {
   ApiFromModules,
@@ -20,6 +21,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   "accounts/smartAccounts": typeof accounts_smartAccounts;
   auth: typeof auth;
+  "contacts/contacts": typeof contacts_contacts;
 }>;
 
 /**

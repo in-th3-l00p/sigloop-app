@@ -80,6 +80,18 @@ export const update = mutation({
   },
 })
 
+export const getWithPrivateKey = query({
+  args: { id: v.id("smartAccounts") },
+  handler: async (ctx, args) => {
+    const userId = await requireAuth(ctx)
+    const account = await ctx.db.get(args.id)
+    if (!account || account.userId !== userId) {
+      throw new Error("Account not found")
+    }
+    return account
+  },
+})
+
 export const remove = mutation({
   args: { id: v.id("smartAccounts") },
   handler: async (ctx, args) => {
