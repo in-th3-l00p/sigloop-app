@@ -4,6 +4,7 @@ import { Navigate } from "react-router-dom"
 import { Settings, Mail, Wallet } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { AccountDrawer } from "@/components/account-drawer"
+import { SmartAccountsSection } from "@/components/smart-accounts-section"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 
@@ -96,6 +97,13 @@ export default function DashboardPage() {
 
         {/* Account Section */}
         <AccountSection />
+
+        {/* Smart Accounts Section */}
+        <SmartAccountsSection accounts={[
+          { _id: "mock-1", name: "Trading Wallet", chain: "Base" },
+          { _id: "mock-2", name: "Savings", chain: "Ethereum" },
+          { _id: "mock-3", name: "Agent Payments", chain: "Polygon" },
+        ]} />
       </div>
     </div>
   )
