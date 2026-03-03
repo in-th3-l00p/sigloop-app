@@ -20,4 +20,19 @@ export default defineSchema({
     name: v.string(),
     address: v.string(),
   }).index("by_user", ["userId"]),
+
+  transactions: defineTable({
+    userId: v.string(),
+    accountId: v.id("smartAccounts"),
+    hash: v.string(),
+    from: v.string(),
+    to: v.string(),
+    value: v.string(),
+    direction: v.string(),
+    status: v.string(),
+    chain: v.string(),
+    createdAt: v.float64(),
+  })
+    .index("by_account", ["accountId"])
+    .index("by_user", ["userId"]),
 })

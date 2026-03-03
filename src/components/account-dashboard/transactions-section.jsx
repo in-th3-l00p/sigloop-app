@@ -1,5 +1,6 @@
+import { useQuery } from "convex/react"
+import { api } from "../../../convex/_generated/api"
 import { ArrowDownLeft, ArrowUpRight, ExternalLink } from "lucide-react"
-import { useTransactions } from "@/hooks/use-transactions"
 import { truncateAddress, formatDate, formatEth } from "@/lib/format"
 import { SendDialog } from "./send-dialog"
 import { ContactsDialog } from "./contacts-dialog"
@@ -9,7 +10,10 @@ const ETHERSCAN_BASE = {
 }
 
 export function TransactionsSection({ account }) {
-  const { transactions, isLoading, refetch } = useTransactions(account.address, account.chain)
+  const transactions = useQuery(
+    api.transactions.transactions.listByAccount,
+    { accountId: account._id }
+  )
   const explorerBase = ETHERSCAN_BASE[account.chain] ?? "https://sepolia.etherscan.io"
 
   return (
@@ -18,11 +22,11 @@ export function TransactionsSection({ account }) {
         <h2 className="text-sm font-medium text-muted-foreground">Transactions</h2>
         <div className="flex items-center gap-2">
           <ContactsDialog />
-          <SendDialog account={account} onSent={refetch} />
+          <SendDialog account={account} />
         </div>
       </div>
 
-      {isLoading ? (
+      {transactions === undefined ? (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
             <div key={i} className="flex items-center gap-3 animate-pulse">
@@ -45,12 +49,12 @@ export function TransactionsSection({ account }) {
       ) : (
         <div className="space-y-1">
           {transactions.map((tx) => {
-            const isOutgoing = tx.from.toLowerCase() === account.address.toLowerCase()
+            const isOutgoing = tx.direction === "out"
             const counterparty = isOutgoing ? tx.to : tx.from
 
             return (
               <a
-                key={tx.hash}
+                key={tx._id}
                 href={`${explorerBase}/tx/${tx.hash}`}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -82,7 +86,7 @@ export function TransactionsSection({ account }) {
                   <p className="text-sm font-medium">
                     {isOutgoing ? "-" : "+"}{formatEth(tx.value)} ETH
                   </p>
-                  <p className="text-xs text-muted-foreground">{formatDate(tx.timestamp)}</p>
+                  <p className="text-xs text-muted-foreground">{formatDate(tx.createdAt)}</p>
                 </div>
                 <ExternalLink className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
               </a>

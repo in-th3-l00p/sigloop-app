@@ -73,7 +73,7 @@ export default function AccountDashboardPage() {
         <TransactionsSection account={account} />
 
         {/* DeFi */}
-        <DefiSection account={account} />
+        <DefiSection />
       </div>
     </div>
   )

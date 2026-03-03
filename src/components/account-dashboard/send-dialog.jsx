@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { useQuery } from "convex/react"
+import { useQuery, useMutation } from "convex/react"
 import { api } from "../../../convex/_generated/api"
 import { ArrowUpRight, Loader2, BookUser } from "lucide-react"
 import { parseEther } from "viem"
@@ -19,7 +19,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 
-export function SendDialog({ account, onSent }) {
+export function SendDialog({ account }) {
   const [open, setOpen] = useState(false)
   const [to, setTo] = useState("")
   const [amount, setAmount] = useState("")
@@ -30,6 +30,7 @@ export function SendDialog({ account, onSent }) {
     api.accounts.smartAccounts.getWithPrivateKey,
     open ? { id: account._id } : "skip"
   )
+  const createTx = useMutation(api.transactions.transactions.create)
 
   const canSubmit = isValidAddress(to) && Number(amount) > 0 && !isSending
 
@@ -39,16 +40,26 @@ export function SendDialog({ account, onSent }) {
     setIsSending(true)
     setError(null)
     try {
-      await sendTransaction({
+      const value = parseEther(amount)
+      const result = await sendTransaction({
         chainSlug: account.chain,
         privateKey: accountWithKey.privateKey,
         to,
-        value: parseEther(amount),
+        value,
+      })
+      await createTx({
+        accountId: account._id,
+        hash: result.txHash,
+        from: account.address,
+        to,
+        value: value.toString(),
+        direction: "out",
+        status: "success",
+        chain: account.chain,
       })
       setTo("")
       setAmount("")
       setOpen(false)
-      onSent?.()
     } catch (err) {
       setError(err.message ?? "Transaction failed")
     } finally {

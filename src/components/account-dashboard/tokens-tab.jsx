@@ -1,10 +1,6 @@
-import { useEthBalance } from "@/hooks/use-eth-balance"
-import { formatEth } from "@/lib/format"
 import { Separator } from "@/components/ui/separator"
 
-export function TokensTab({ account }) {
-  const { balance, isLoading } = useEthBalance(account.address, account.chain)
-
+export function TokensTab() {
   return (
     <div className="space-y-3">
       {/* ETH row */}
@@ -17,15 +13,6 @@ export function TokensTab({ account }) {
             <p className="text-sm font-medium">Ethereum</p>
             <p className="text-xs text-muted-foreground">ETH</p>
           </div>
-        </div>
-        <div className="text-right">
-          <p className="text-sm font-medium">
-            {isLoading ? (
-              <span className="animate-pulse text-muted-foreground">...</span>
-            ) : (
-              `${formatEth(balance)} ETH`
-            )}
-          </p>
         </div>
       </div>
 

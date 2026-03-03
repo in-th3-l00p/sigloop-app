@@ -1,9 +1,8 @@
 import { Copy, Check, Calendar } from "lucide-react"
 import { getAccountIcon } from "@/components/smart-accounts-section"
 import { getChainDisplayName } from "@/lib/chains"
-import { truncateAddress, formatDate, formatEth } from "@/lib/format"
+import { truncateAddress, formatDate } from "@/lib/format"
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard"
-import { useEthBalance } from "@/hooks/use-eth-balance"
 import { EditNameDialog } from "./edit-name-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -11,7 +10,6 @@ import { Button } from "@/components/ui/button"
 export function GeneralInfoSection({ account }) {
   const Icon = getAccountIcon(account.icon)
   const [copied, copy] = useCopyToClipboard()
-  const { balance, isLoading: balanceLoading } = useEthBalance(account.address, account.chain)
 
   return (
     <div className="rounded-lg border border-border p-5 space-y-4">
@@ -52,17 +50,6 @@ export function GeneralInfoSection({ account }) {
           <Calendar className="h-3 w-3" />
           {formatDate(account.createdAt)}
         </div>
-      </div>
-
-      <div className="rounded-md bg-muted/50 p-3">
-        <p className="text-xs text-muted-foreground mb-1">Balance</p>
-        <p className="text-2xl font-bold tracking-tight">
-          {balanceLoading ? (
-            <span className="text-muted-foreground animate-pulse">...</span>
-          ) : (
-            `${formatEth(balance)} ETH`
-          )}
-        </p>
       </div>
     </div>
   )
