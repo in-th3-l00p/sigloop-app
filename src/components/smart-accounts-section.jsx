@@ -1,4 +1,6 @@
 import { useState } from "react"
+import { useMutation } from "convex/react"
+import { api } from "../../convex/_generated/api"
 import {
   Plus,
   Wallet,
@@ -9,7 +11,10 @@ import {
   BadgeDollarSign,
   HandCoins,
   Coins,
+  Loader2,
 } from "lucide-react"
+import { createSmartAccount } from "@/lib/zerodev"
+import { getChainDisplayName } from "@/lib/chains"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -65,7 +70,7 @@ function AccountCard({ account }) {
       </div>
       <div className="min-w-0">
         <p className="text-sm font-medium truncate">{account.name}</p>
-        <p className="text-xs text-muted-foreground">{account.chain}</p>
+        <p className="text-xs text-muted-foreground">{getChainDisplayName(account.chain)}</p>
       </div>
     </button>
   )
@@ -75,14 +80,31 @@ function CreateAccountDialog() {
   const [open, setOpen] = useState(false)
   const [name, setName] = useState("")
   const [chain, setChain] = useState("")
-  const handleCreate = () => {
-    // TODO: Call Convex mutation to store account + ZeroDev to create kernel account
-    setName("")
-    setChain("")
-    setOpen(false)
+  const [isCreating, setIsCreating] = useState(false)
+  const createAccount = useMutation(api.accounts.smartAccounts.create)
+
+  const handleCreate = async () => {
+    setIsCreating(true)
+    try {
+      const { address, privateKey } = await createSmartAccount()
+      await createAccount({
+        name: name.trim(),
+        chain,
+        icon: "wallet",
+        address,
+        privateKey,
+      })
+      setName("")
+      setChain("")
+      setOpen(false)
+    } catch (error) {
+      console.error("Failed to create smart account:", error)
+    } finally {
+      setIsCreating(false)
+    }
   }
 
-  const canSubmit = name.trim().length > 0 && chain.length > 0
+  const canSubmit = name.trim().length > 0 && chain.length > 0 && !isCreating
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -144,7 +166,8 @@ function CreateAccountDialog() {
             disabled={!canSubmit}
             className="cursor-pointer"
           >
-            Create Account
+            {isCreating && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+            {isCreating ? "Creating..." : "Create Account"}
           </Button>
         </DialogFooter>
       </DialogContent>

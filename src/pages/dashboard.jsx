@@ -1,5 +1,6 @@
 import { usePrivy } from "@privy-io/react-auth"
-import { useConvexAuth } from "convex/react"
+import { useConvexAuth, useQuery } from "convex/react"
+import { api } from "../../convex/_generated/api"
 import { Navigate } from "react-router-dom"
 import { Settings, Mail, Wallet } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
@@ -65,6 +66,7 @@ function AccountSection() {
 export default function DashboardPage() {
   const { logout } = usePrivy()
   const { isLoading, isAuthenticated } = useConvexAuth()
+  const accounts = useQuery(api.accounts.smartAccounts.list) ?? []
 
   if (isLoading) {
     return (
@@ -99,11 +101,7 @@ export default function DashboardPage() {
         <AccountSection />
 
         {/* Smart Accounts Section */}
-        <SmartAccountsSection accounts={[
-          { _id: "mock-1", name: "Trading Wallet", chain: "Base", icon: "banknote" },
-          { _id: "mock-2", name: "Savings", chain: "Ethereum", icon: "piggy-bank" },
-          { _id: "mock-3", name: "Agent Payments", chain: "Polygon", icon: "hand-coins" },
-        ]} />
+        <SmartAccountsSection accounts={accounts} />
       </div>
     </div>
   )

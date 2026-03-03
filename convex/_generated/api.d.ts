@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as accounts_smartAccounts from "../accounts/smartAccounts.js";
 import type * as auth from "../auth.js";
 
 import type {
@@ -17,6 +18,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  "accounts/smartAccounts": typeof accounts_smartAccounts;
   auth: typeof auth;
 }>;
 
