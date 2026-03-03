@@ -1,14 +1,6 @@
 import { mutation, query } from "../_generated/server"
 import { v } from "convex/values"
-import type { QueryCtx, MutationCtx } from "../_generated/server"
-
-async function requireAuth(ctx: QueryCtx | MutationCtx): Promise<string> {
-  const identity = await ctx.auth.getUserIdentity()
-  if (!identity) {
-    throw new Error("Not authenticated")
-  }
-  return identity.tokenIdentifier
-}
+import { requireAuth } from "../lib/auth"
 
 export const create = mutation({
   args: {
@@ -19,7 +11,7 @@ export const create = mutation({
     privateKey: v.string(),
   },
   handler: async (ctx, args) => {
-    const userId = await requireAuth(ctx)
+    const userId = await requireAuth(ctx, "smartAccounts.create")
     return ctx.db.insert("smartAccounts", {
       userId,
       name: args.name,
@@ -36,7 +28,7 @@ export const create = mutation({
 export const list = query({
   args: {},
   handler: async (ctx) => {
-    const userId = await requireAuth(ctx)
+    const userId = await requireAuth(ctx, "smartAccounts.list")
     const accounts = await ctx.db
       .query("smartAccounts")
       .withIndex("by_user", (q) => q.eq("userId", userId))
@@ -51,7 +43,7 @@ export const list = query({
 export const get = query({
   args: { id: v.id("smartAccounts") },
   handler: async (ctx, args) => {
-    const userId = await requireAuth(ctx)
+    const userId = await requireAuth(ctx, "smartAccounts.get")
     const account = await ctx.db.get(args.id)
     if (!account || account.userId !== userId) {
       throw new Error("Account not found")
@@ -68,7 +60,7 @@ export const update = mutation({
     icon: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const userId = await requireAuth(ctx)
+    const userId = await requireAuth(ctx, "smartAccounts.update")
     const account = await ctx.db.get(args.id)
     if (!account || account.userId !== userId) {
       throw new Error("Account not found")
@@ -83,7 +75,7 @@ export const update = mutation({
 export const getWithPrivateKey = query({
   args: { id: v.id("smartAccounts") },
   handler: async (ctx, args) => {
-    const userId = await requireAuth(ctx)
+    const userId = await requireAuth(ctx, "smartAccounts.getWithPrivateKey")
     const account = await ctx.db.get(args.id)
     if (!account || account.userId !== userId) {
       throw new Error("Account not found")
@@ -95,7 +87,7 @@ export const getWithPrivateKey = query({
 export const remove = mutation({
   args: { id: v.id("smartAccounts") },
   handler: async (ctx, args) => {
-    const userId = await requireAuth(ctx)
+    const userId = await requireAuth(ctx, "smartAccounts.remove")
     const account = await ctx.db.get(args.id)
     if (!account || account.userId !== userId) {
       throw new Error("Account not found")

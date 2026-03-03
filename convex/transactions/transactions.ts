@@ -1,14 +1,6 @@
 import { mutation, query } from "../_generated/server"
 import { v } from "convex/values"
-import type { QueryCtx, MutationCtx } from "../_generated/server"
-
-async function requireAuth(ctx: QueryCtx | MutationCtx): Promise<string> {
-  const identity = await ctx.auth.getUserIdentity()
-  if (!identity) {
-    throw new Error("Not authenticated")
-  }
-  return identity.tokenIdentifier
-}
+import { requireAuth } from "../lib/auth"
 
 export const create = mutation({
   args: {
@@ -22,7 +14,7 @@ export const create = mutation({
     chain: v.string(),
   },
   handler: async (ctx, args) => {
-    const userId = await requireAuth(ctx)
+    const userId = await requireAuth(ctx, "transactions.create")
     const account = await ctx.db.get(args.accountId)
     if (!account || account.userId !== userId) {
       throw new Error("Account not found")
@@ -45,7 +37,7 @@ export const create = mutation({
 export const listByAccount = query({
   args: { accountId: v.id("smartAccounts") },
   handler: async (ctx, args) => {
-    const userId = await requireAuth(ctx)
+    const userId = await requireAuth(ctx, "transactions.listByAccount")
     const account = await ctx.db.get(args.accountId)
     if (!account || account.userId !== userId) {
       throw new Error("Account not found")

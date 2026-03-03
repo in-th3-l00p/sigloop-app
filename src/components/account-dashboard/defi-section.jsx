@@ -2,7 +2,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { TokensTab } from "./tokens-tab"
 import { NftsTab } from "./nfts-tab"
 
-export function DefiSection() {
+export function DefiSection({ account }) {
   return (
     <div className="rounded-lg border border-border p-5 space-y-4">
       <h2 className="text-sm font-medium text-muted-foreground">DeFi</h2>
@@ -12,7 +12,7 @@ export function DefiSection() {
           <TabsTrigger value="nfts" className="cursor-pointer">NFTs</TabsTrigger>
         </TabsList>
         <TabsContent value="tokens">
-          <TokensTab />
+          <TokensTab account={account} />
         </TabsContent>
         <TabsContent value="nfts">
           <NftsTab />
