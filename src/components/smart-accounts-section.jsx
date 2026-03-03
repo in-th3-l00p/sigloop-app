@@ -14,7 +14,7 @@ import {
   Loader2,
 } from "lucide-react"
 import { createSmartAccount } from "@/lib/zerodev"
-import { getChainDisplayName } from "@/lib/chains"
+import { getChainDisplayName, SUPPORTED_CHAINS } from "@/lib/chains"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -52,13 +52,6 @@ export function getAccountIcon(iconId) {
   return ICON_MAP[iconId] ?? Wallet
 }
 
-const SUPPORTED_CHAINS = [
-  { id: "ethereum", name: "Ethereum" },
-  { id: "base", name: "Base" },
-  { id: "polygon", name: "Polygon" },
-  { id: "arbitrum", name: "Arbitrum" },
-  { id: "optimism", name: "Optimism" },
-]
 
 function AccountCard({ account }) {
   const Icon = getAccountIcon(account.icon)
@@ -86,7 +79,7 @@ function CreateAccountDialog() {
   const handleCreate = async () => {
     setIsCreating(true)
     try {
-      const { address, privateKey } = await createSmartAccount()
+      const { address, privateKey } = await createSmartAccount(chain)
       await createAccount({
         name: name.trim(),
         chain,

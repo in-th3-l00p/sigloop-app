@@ -3,7 +3,7 @@ import { generatePrivateKey, privateKeyToAccount } from "viem/accounts"
 import { entryPoint07Address } from "viem/account-abstraction"
 import { signerToEcdsaValidator } from "@zerodev/ecdsa-validator"
 import { createKernelAccount } from "@zerodev/sdk"
-import { getZeroDevChain, getZeroDevRpcUrl } from "./chains"
+import { getChainConfig } from "./chains"
 
 const KERNEL_V3_1 = "0.3.1"
 
@@ -12,13 +12,14 @@ const ENTRY_POINT = {
   version: "0.7",
 }
 
-export async function createSmartAccount() {
+export async function createSmartAccount(chainSlug) {
+  const { chain, rpcUrl } = getChainConfig(chainSlug)
   const privateKey = generatePrivateKey()
   const signer = privateKeyToAccount(privateKey)
 
   const publicClient = createPublicClient({
-    chain: getZeroDevChain(),
-    transport: http(getZeroDevRpcUrl()),
+    chain,
+    transport: http(rpcUrl),
   })
 
   const ecdsaValidator = await signerToEcdsaValidator(publicClient, {
