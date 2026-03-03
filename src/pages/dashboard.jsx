@@ -100,9 +100,9 @@ export default function DashboardPage() {
 
         {/* Smart Accounts Section */}
         <SmartAccountsSection accounts={[
-          { _id: "mock-1", name: "Trading Wallet", chain: "Base" },
-          { _id: "mock-2", name: "Savings", chain: "Ethereum" },
-          { _id: "mock-3", name: "Agent Payments", chain: "Polygon" },
+          { _id: "mock-1", name: "Trading Wallet", chain: "Base", icon: "banknote" },
+          { _id: "mock-2", name: "Savings", chain: "Ethereum", icon: "piggy-bank" },
+          { _id: "mock-3", name: "Agent Payments", chain: "Polygon", icon: "hand-coins" },
         ]} />
       </div>
     </div>
