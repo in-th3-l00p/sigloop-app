@@ -1,7 +1,8 @@
 import { mutation, query } from "../_generated/server"
 import { v } from "convex/values"
+import type { QueryCtx, MutationCtx } from "../_generated/server"
 
-async function requireAuth(ctx) {
+async function requireAuth(ctx: QueryCtx | MutationCtx): Promise<string> {
   const identity = await ctx.auth.getUserIdentity()
   if (!identity) {
     throw new Error("Not authenticated")
@@ -43,7 +44,7 @@ export const list = query({
 
     return accounts
       .filter((a) => a.status === "active")
-      .map(({ privateKey, ...rest }) => rest)
+      .map(({ privateKey: _, ...rest }) => rest)
   },
 })
 
@@ -55,7 +56,7 @@ export const get = query({
     if (!account || account.userId !== userId) {
       throw new Error("Account not found")
     }
-    const { privateKey, ...rest } = account
+    const { privateKey: _, ...rest } = account
     return rest
   },
 })
@@ -72,7 +73,7 @@ export const update = mutation({
     if (!account || account.userId !== userId) {
       throw new Error("Account not found")
     }
-    const patch = {}
+    const patch: Record<string, string> = {}
     if (args.name !== undefined) patch.name = args.name
     if (args.icon !== undefined) patch.icon = args.icon
     await ctx.db.patch(args.id, patch)
