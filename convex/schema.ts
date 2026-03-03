@@ -32,7 +32,22 @@ export default defineSchema({
     status: v.string(),
     chain: v.string(),
     createdAt: v.float64(),
+    agentCardId: v.optional(v.id("agentCards")),
   })
     .index("by_account", ["accountId"])
-    .index("by_user", ["userId"]),
+    .index("by_user", ["userId"])
+    .index("by_card", ["agentCardId"]),
+
+  agentCards: defineTable({
+    userId: v.string(),
+    accountId: v.id("smartAccounts"),
+    name: v.string(),
+    secret: v.string(),
+    limit: v.optional(v.string()),
+    spent: v.string(),
+    status: v.string(),
+    createdAt: v.float64(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_account", ["accountId"]),
 })

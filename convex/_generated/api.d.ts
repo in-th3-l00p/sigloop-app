@@ -9,6 +9,7 @@
  */
 
 import type * as accounts_smartAccounts from "../accounts/smartAccounts.js";
+import type * as agentCards_agentCards from "../agentCards/agentCards.js";
 import type * as auth from "../auth.js";
 import type * as contacts_contacts from "../contacts/contacts.js";
 import type * as lib_auth from "../lib/auth.js";
@@ -22,6 +23,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   "accounts/smartAccounts": typeof accounts_smartAccounts;
+  "agentCards/agentCards": typeof agentCards_agentCards;
   auth: typeof auth;
   "contacts/contacts": typeof contacts_contacts;
   "lib/auth": typeof lib_auth;

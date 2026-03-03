@@ -6,6 +6,7 @@ import { ArrowLeft } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { GeneralInfoSection } from "@/components/account-dashboard/general-info-section"
 import { TransactionsSection } from "@/components/account-dashboard/transactions-section"
+import { AgentCardsSection } from "@/components/account-dashboard/agent-cards-section"
 import { DefiSection } from "@/components/account-dashboard/defi-section"
 import { Button } from "@/components/ui/button"
 
@@ -71,6 +72,9 @@ export default function AccountDashboardPage() {
 
         {/* Transactions */}
         <TransactionsSection account={account} />
+
+        {/* Agent Cards */}
+        <AgentCardsSection account={account} />
 
         {/* DeFi */}
         <DefiSection account={account} />
