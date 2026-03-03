@@ -1,15 +1,12 @@
 import { formatEth } from "@/lib/format"
 import { Badge } from "@/components/ui/badge"
 
-export function AgentCardVisual({ card, onClick }) {
+export function AgentCardVisual({ card }) {
   const isPaused = card.status === "paused"
   const isUnlimited = !card.limit
 
   return (
-    <button
-      onClick={onClick}
-      className="cursor-pointer relative aspect-[1.586/1] w-full rounded-xl overflow-hidden text-left transition-transform hover:scale-[1.02] active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-    >
+    <div className="relative aspect-[1.586/1] w-full rounded-xl overflow-hidden text-left transition-transform hover:scale-[1.02] active:scale-[0.99]">
       {/* Gradient background */}
       <div className={`absolute inset-0 ${
         isPaused
@@ -51,6 +48,6 @@ export function AgentCardVisual({ card, onClick }) {
           <div className="h-5 w-7 rounded-sm bg-white/20" />
         </div>
       </div>
-    </button>
+    </div>
   )
 }

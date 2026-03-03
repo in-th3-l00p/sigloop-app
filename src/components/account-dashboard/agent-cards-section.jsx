@@ -1,15 +1,14 @@
 import { useState } from "react"
+import { Link } from "react-router-dom"
 import { useQuery } from "convex/react"
 import { api } from "../../../convex/_generated/api"
 import { Bot, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { AgentCardVisual } from "./agent-card-visual"
 import { CreateCardDialog } from "./create-card-dialog"
-import { CardDetailDialog } from "./card-detail-dialog"
 
 export function AgentCardsSection({ account }) {
   const [createOpen, setCreateOpen] = useState(false)
-  const [selectedCard, setSelectedCard] = useState(null)
 
   const cards = useQuery(
     api.agentCards.agentCards.list,
@@ -49,11 +48,12 @@ export function AgentCardsSection({ account }) {
       ) : (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {cards.map((card) => (
-            <AgentCardVisual
+            <Link
               key={card._id}
-              card={card}
-              onClick={() => setSelectedCard(card)}
-            />
+              to={`/app/dashboard/${account._id}/card/${card._id}`}
+            >
+              <AgentCardVisual card={card} />
+            </Link>
           ))}
         </div>
       )}
@@ -62,12 +62,6 @@ export function AgentCardsSection({ account }) {
         accountId={account._id}
         open={createOpen}
         onOpenChange={setCreateOpen}
-      />
-
-      <CardDetailDialog
-        card={selectedCard}
-        open={selectedCard !== null}
-        onOpenChange={(v) => { if (!v) setSelectedCard(null) }}
       />
     </div>
   )

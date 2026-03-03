@@ -47,7 +47,7 @@ export function TransactionsSection({ account }) {
           </p>
         </div>
       ) : (
-        <div className="space-y-1">
+        <div className="space-y-1 max-h-64 sm:max-h-80 overflow-y-auto">
           {transactions.map((tx) => {
             const isOutgoing = tx.direction === "out"
             const counterparty = isOutgoing ? tx.to : tx.from

@@ -46,6 +46,12 @@ export default defineSchema({
     limit: v.optional(v.string()),
     spent: v.string(),
     status: v.string(),
+    limitResetPeriod: v.optional(v.string()),
+    limitResetAt: v.optional(v.float64()),
+    policies: v.optional(v.array(v.object({
+      type: v.string(),
+      value: v.string(),
+    }))),
     createdAt: v.float64(),
   })
     .index("by_user", ["userId"])
