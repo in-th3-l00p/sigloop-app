@@ -1,13 +1,22 @@
-import { useMemo, useState } from "react"
+import { useMemo, useRef, useState } from "react"
 import { Link, Navigate } from "react-router-dom"
 import { usePrivy } from "@privy-io/react-auth"
 import { useConvexAuth, useMutation, useQuery } from "convex/react"
 import { api } from "../../convex/_generated/api"
-import { ArrowLeft, Copy, KeyRound, Trash2, Activity, Save } from "lucide-react"
+import { Activity, ArrowLeft, Copy, KeyRound, Pencil, Plus, Trash2 } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 
 const ALL_SCOPES = ["read", "write", "tx", "admin"]
 
@@ -44,18 +53,43 @@ function UsageBars({ points = [] }) {
 
 function ScopeSelector({ value, onChange }) {
   const scopes = value ?? []
+  const lastNonAdminScopes = useRef(scopes.filter((scope) => scope !== "admin"))
+
+  const toggleScope = (scope) => {
+    const hasAdmin = scopes.includes("admin")
+
+    if (scope === "admin") {
+      if (!hasAdmin) {
+        lastNonAdminScopes.current = scopes.filter((item) => item !== "admin")
+        onChange([...ALL_SCOPES])
+        return
+      }
+
+      const restored = lastNonAdminScopes.current.length > 0
+        ? lastNonAdminScopes.current
+        : ["read", "write", "tx"]
+      onChange(restored)
+      return
+    }
+
+    if (hasAdmin) {
+      return
+    }
+
+    const next = scopes.includes(scope)
+      ? scopes.filter((item) => item !== scope)
+      : [...scopes, scope]
+    lastNonAdminScopes.current = next.filter((item) => item !== "admin")
+    onChange(next)
+  }
+
   return (
     <div className="flex flex-wrap gap-1.5">
       {ALL_SCOPES.map((scope) => (
         <button
           key={scope}
           type="button"
-          onClick={() => {
-            const next = scopes.includes(scope)
-              ? scopes.filter((item) => item !== scope)
-              : [...scopes, scope]
-            onChange(next)
-          }}
+          onClick={() => toggleScope(scope)}
           className={`cursor-pointer rounded-md border px-2 py-1 text-xs ${
             scopes.includes(scope)
               ? "border-primary bg-primary/10 text-primary"
@@ -66,6 +100,86 @@ function ScopeSelector({ value, onChange }) {
         </button>
       ))}
     </div>
+  )
+}
+
+function ApiKeyDialog({
+  trigger,
+  title,
+  description,
+  initial,
+  submitLabel,
+  onSubmit,
+}) {
+  const [open, setOpen] = useState(false)
+  const [name, setName] = useState(initial?.name ?? "")
+  const [scopes, setScopes] = useState(initial?.scopes ?? ["read", "write", "tx"])
+  const [rateLimitPerMinute, setRateLimitPerMinute] = useState(String(initial?.rateLimitPerMinute ?? 120))
+  const [ipAllowlistRaw, setIpAllowlistRaw] = useState((initial?.ipAllowlist ?? []).join(", "))
+
+  const reset = () => {
+    setName(initial?.name ?? "")
+    setScopes(initial?.scopes ?? ["read", "write", "tx"])
+    setRateLimitPerMinute(String(initial?.rateLimitPerMinute ?? 120))
+    setIpAllowlistRaw((initial?.ipAllowlist ?? []).join(", "))
+  }
+
+  const handleOpenChange = (next) => {
+    setOpen(next)
+    if (!next) {
+      reset()
+    }
+  }
+
+  const handleSubmit = async () => {
+    if (!name.trim()) return
+    await onSubmit({
+      name: name.trim(),
+      scopes,
+      rateLimitPerMinute: Number(rateLimitPerMinute) || undefined,
+      ipAllowlist: ipAllowlistRaw
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean),
+    })
+    setOpen(false)
+    reset()
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>{description}</DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-3">
+          <Input value={name} onChange={(event) => setName(event.target.value)} placeholder="Key name" />
+          <ScopeSelector value={scopes} onChange={setScopes} />
+          <Input
+            value={rateLimitPerMinute}
+            onChange={(event) => setRateLimitPerMinute(event.target.value)}
+            placeholder="Rate limit per minute"
+          />
+          <Input
+            value={ipAllowlistRaw}
+            onChange={(event) => setIpAllowlistRaw(event.target.value)}
+            placeholder="IP allowlist (comma separated)"
+          />
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)} className="cursor-pointer">
+            Cancel
+          </Button>
+          <Button onClick={handleSubmit} className="cursor-pointer">
+            {submitLabel}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
 
@@ -95,13 +209,8 @@ export default function ApiDashboardPage() {
   const revokeKey = useMutation(api.apiKeys.apiKeys.revoke)
   const updateKeyPolicy = useMutation(api.apiKeys.apiKeys.updatePolicy)
 
-  const [newKeyName, setNewKeyName] = useState("")
-  const [newKeyScopes, setNewKeyScopes] = useState(["read", "write", "tx"])
-  const [newRateLimit, setNewRateLimit] = useState("120")
-  const [newIpAllowlist, setNewIpAllowlist] = useState("")
   const [lastCreated, setLastCreated] = useState(null)
   const [copied, copy] = useCopyToClipboard()
-  const [draftPolicies, setDraftPolicies] = useState({})
 
   if (authLoading) {
     return (
@@ -113,33 +222,6 @@ export default function ApiDashboardPage() {
 
   if (!isAuthenticated) {
     return <Navigate to="/app" replace />
-  }
-
-  const onCreateKey = async () => {
-    if (!newKeyName.trim()) return
-    const created = await createKey({
-      name: newKeyName.trim(),
-      scopes: newKeyScopes,
-      rateLimitPerMinute: Number(newRateLimit) || undefined,
-      ipAllowlist: newIpAllowlist
-        .split(",")
-        .map((item) => item.trim())
-        .filter(Boolean),
-    })
-    setLastCreated(created)
-    setNewKeyName("")
-  }
-
-  const onSavePolicy = async (key) => {
-    const draft = draftPolicies[key._id]
-    if (!draft) return
-    await updateKeyPolicy({
-      id: key._id,
-      scopes: draft.scopes,
-      rateLimitPerMinute: draft.rateLimitPerMinute,
-      ipAllowlist: draft.ipAllowlist,
-      name: draft.name,
-    })
   }
 
   const logs = logsResult?.items ?? []
@@ -272,31 +354,26 @@ export default function ApiDashboardPage() {
         </section>
 
         <section className="rounded-lg border border-border p-5 space-y-4">
-          <div className="flex items-center gap-2">
-            <KeyRound className="h-4 w-4 text-muted-foreground" />
-            <h2 className="text-sm font-medium text-muted-foreground">API Keys</h2>
-          </div>
-
-          <div className="space-y-2 rounded-md border border-border p-3">
-            <Input
-              placeholder="Key name (e.g. Production Backend)"
-              value={newKeyName}
-              onChange={(event) => setNewKeyName(event.target.value)}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <KeyRound className="h-4 w-4 text-muted-foreground" />
+              <h2 className="text-sm font-medium text-muted-foreground">API Keys</h2>
+            </div>
+            <ApiKeyDialog
+              trigger={(
+                <Button size="sm" className="cursor-pointer">
+                  <Plus className="h-3.5 w-3.5" />
+                  New Key
+                </Button>
+              )}
+              title="Create API key"
+              description="Configure scopes, rate limits, and optional IP allowlist."
+              submitLabel="Create"
+              onSubmit={async (payload) => {
+                const created = await createKey(payload)
+                setLastCreated(created)
+              }}
             />
-            <ScopeSelector value={newKeyScopes} onChange={setNewKeyScopes} />
-            <Input
-              placeholder="Rate limit per minute"
-              value={newRateLimit}
-              onChange={(event) => setNewRateLimit(event.target.value)}
-            />
-            <Input
-              placeholder="IP allowlist (comma separated)"
-              value={newIpAllowlist}
-              onChange={(event) => setNewIpAllowlist(event.target.value)}
-            />
-            <Button onClick={onCreateKey} className="cursor-pointer">
-              Create Key
-            </Button>
           </div>
 
           {lastCreated && (
@@ -318,81 +395,49 @@ export default function ApiDashboardPage() {
             <p className="text-sm text-muted-foreground">No API keys yet.</p>
           ) : (
             <div className="space-y-2">
-              {keys.map((key) => {
-                const draft = draftPolicies[key._id] ?? {
-                  name: key.name,
-                  scopes: key.scopes ?? [],
-                  ipAllowlist: key.ipAllowlist ?? [],
-                  rateLimitPerMinute: key.rateLimitPerMinute ?? 120,
-                }
-
-                return (
-                  <div key={key._id} className="rounded-md border border-border p-3 space-y-2">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium">{key.name}</p>
-                        <p className="text-xs text-muted-foreground font-mono">
-                          {key.keyPrefix}... | {key.status} | created {formatDate(key.createdAt)}
-                        </p>
-                      </div>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        className="cursor-pointer"
-                        disabled={key.status === "revoked"}
-                        onClick={() => revokeKey({ id: key._id })}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                        Revoke
-                      </Button>
-                    </div>
-
-                    <Input
-                      value={draft.name}
-                      onChange={(event) => setDraftPolicies({
-                        ...draftPolicies,
-                        [key._id]: { ...draft, name: event.target.value },
-                      })}
+              {keys.map((key) => (
+                <div key={key._id} className="rounded-md border border-border p-3 flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium">{key.name}</p>
+                    <p className="text-xs text-muted-foreground font-mono">
+                      {key.keyPrefix}... | {key.status} | {(key.scopes ?? []).join(", ")}
+                    </p>
+                    {key.lastUsedAt && (
+                      <p className="text-xs text-muted-foreground">last used {formatDate(key.lastUsedAt)}</p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <ApiKeyDialog
+                      trigger={(
+                        <Button variant="outline" size="sm" className="cursor-pointer" disabled={key.status === "revoked"}>
+                          <Pencil className="h-3.5 w-3.5" />
+                          Edit
+                        </Button>
+                      )}
+                      title="Edit API key policy"
+                      description="Update scopes, rate limit, and allowlist."
+                      submitLabel="Save"
+                      initial={{
+                        name: key.name,
+                        scopes: key.scopes ?? [],
+                        ipAllowlist: key.ipAllowlist ?? [],
+                        rateLimitPerMinute: key.rateLimitPerMinute ?? 120,
+                      }}
+                      onSubmit={(payload) => updateKeyPolicy({ id: key._id, ...payload })}
                     />
-                    <ScopeSelector
-                      value={draft.scopes}
-                      onChange={(scopes) => setDraftPolicies({
-                        ...draftPolicies,
-                        [key._id]: { ...draft, scopes },
-                      })}
-                    />
-                    <Input
-                      value={String(draft.rateLimitPerMinute ?? "")}
-                      onChange={(event) => setDraftPolicies({
-                        ...draftPolicies,
-                        [key._id]: { ...draft, rateLimitPerMinute: Number(event.target.value) || undefined },
-                      })}
-                      placeholder="Rate limit per minute"
-                    />
-                    <Input
-                      value={(draft.ipAllowlist ?? []).join(", ")}
-                      onChange={(event) => setDraftPolicies({
-                        ...draftPolicies,
-                        [key._id]: {
-                          ...draft,
-                          ipAllowlist: event.target.value.split(",").map((item) => item.trim()).filter(Boolean),
-                        },
-                      })}
-                      placeholder="IP allowlist (comma separated)"
-                    />
-
                     <Button
-                      variant="outline"
+                      variant="destructive"
                       size="sm"
                       className="cursor-pointer"
-                      onClick={() => onSavePolicy(key)}
+                      disabled={key.status === "revoked"}
+                      onClick={() => revokeKey({ id: key._id })}
                     >
-                      <Save className="h-3.5 w-3.5" />
-                      Save Policy
+                      <Trash2 className="h-3.5 w-3.5" />
+                      Revoke
                     </Button>
                   </div>
-                )
-              })}
+                </div>
+              ))}
             </div>
           )}
         </section>
