@@ -59,4 +59,32 @@ export default defineSchema({
     .index("by_user", ["userId"])
     .index("by_account", ["accountId"])
     .index("by_secret", ["secret"]),
+
+  integrations: defineTable({
+    userId: v.string(),
+    cardId: v.id("agentCards"),
+    presetId: v.string(),
+    type: v.string(),
+    platform: v.string(),
+    name: v.string(),
+    description: v.string(),
+    status: v.string(),
+    schemaVersion: v.float64(),
+    verificationMessage: v.optional(v.string()),
+    verifiedAt: v.optional(v.float64()),
+    config: v.optional(v.object({
+      secretRef: v.optional(v.string()),
+      language: v.optional(v.string()),
+      packageManager: v.optional(v.string()),
+      endpointBaseUrl: v.optional(v.string()),
+      toolLibrary: v.optional(v.string()),
+    })),
+    createdAt: v.float64(),
+    updatedAt: v.float64(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_card", ["cardId"])
+    .index("by_type", ["type"])
+    .index("by_platform", ["platform"])
+    .index("by_card_preset", ["cardId", "presetId"]),
 })

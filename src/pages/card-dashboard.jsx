@@ -31,6 +31,7 @@ import { ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import { CardIntegrationsSection } from "@/components/account-dashboard/card-integrations-section"
 
 const RESET_LABELS = {
   daily: "Daily",
@@ -122,6 +123,10 @@ export default function CardDashboardPage() {
         />
         <SpendingSection card={card} updateCard={updateCard} />
         <PoliciesSection card={card} updateCard={updateCard} />
+        <CardIntegrationsSection
+          cardId={card._id}
+          cardSecret={cardWithSecret?.secret}
+        />
         <CardTransactionsSection transactions={transactions} chain={card.chain} />
         <DangerSection
           card={card}

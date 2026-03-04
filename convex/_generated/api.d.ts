@@ -13,6 +13,7 @@ import type * as agentCards_agentCards from "../agentCards/agentCards.js";
 import type * as agentCards_service from "../agentCards/service.js";
 import type * as auth from "../auth.js";
 import type * as contacts_contacts from "../contacts/contacts.js";
+import type * as integrations_integrations from "../integrations/integrations.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as transactions_transactions from "../transactions/transactions.js";
 
@@ -28,6 +29,7 @@ declare const fullApi: ApiFromModules<{
   "agentCards/service": typeof agentCards_service;
   auth: typeof auth;
   "contacts/contacts": typeof contacts_contacts;
+  "integrations/integrations": typeof integrations_integrations;
   "lib/auth": typeof lib_auth;
   "transactions/transactions": typeof transactions_transactions;
 }>;
