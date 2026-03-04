@@ -33,6 +33,18 @@ export function formatEth(weiBigInt: bigint | string | number | undefined | null
   return decimals ? `${whole}.${decimals}` : whole.toString()
 }
 
+export function formatEthFull(weiBigInt: bigint | string | number | undefined | null) {
+  if (weiBigInt === undefined || weiBigInt === null) return "0.0"
+  const wei = BigInt(weiBigInt)
+  const whole = wei / 1000000000000000000n
+  const remainder = wei % 1000000000000000000n
+  const decimals = remainder.toString().padStart(18, "0").replace(/0+$/, "")
+  if (!decimals) {
+    return `${whole}.0`
+  }
+  return `${whole}.${decimals}`
+}
+
 export function isValidAddress(addr: unknown): addr is `0x${string}` {
   return typeof addr === "string" && /^0x[0-9a-fA-F]{40}$/.test(addr)
 }

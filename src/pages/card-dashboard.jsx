@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useParams, Navigate, Link, useNavigate } from "react-router-dom"
 import { usePrivy } from "@privy-io/react-auth"
 import { useConvexAuth, useQuery, useMutation } from "convex/react"
@@ -23,7 +23,7 @@ import {
   Plus,
   Bot,
 } from "lucide-react"
-import { truncateAddress, formatDate, formatEth, isValidAddress } from "@/lib/format"
+import { truncateAddress, formatDate, formatEth, formatEthFull, isValidAddress } from "@/lib/format"
 import { getExplorerTxUrl } from "@/lib/explorer"
 import { getTxStatusMeta, TX_STATUS_LEGEND } from "@/lib/tx-status"
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard"
@@ -32,12 +32,21 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { CardIntegrationsSection } from "@/components/account-dashboard/card-integrations-section"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 
 const RESET_LABELS = {
   daily: "Daily",
   weekly: "Weekly",
   monthly: "Monthly",
 }
+const INLINE_TX_LIMIT = 8
 
 export default function CardDashboardPage() {
   const { accountId, cardId } = useParams()
@@ -560,6 +569,20 @@ function PoliciesSection({ card, updateCard }) {
 }
 
 function CardTransactionsSection({ transactions, chain }) {
+  const [openAll, setOpenAll] = useState(false)
+  const [search, setSearch] = useState("")
+  const visibleTransactions = transactions ? transactions.slice(0, INLINE_TX_LIMIT) : []
+  const filteredTransactions = useMemo(() => {
+    if (!transactions) return []
+    const q = search.trim().toLowerCase()
+    if (!q) return transactions
+    return transactions.filter((tx) => {
+      const amount = formatEthFull(tx.value)
+      const dateLabel = new Date(tx.createdAt).toLocaleString("en-US")
+      return [tx.from, tx.to, amount, dateLabel].some((v) => (v || "").toLowerCase().includes(q))
+    })
+  }, [transactions, search])
+
   return (
     <div className="rounded-lg border border-border p-5 space-y-4">
       <h2 className="text-sm font-medium text-muted-foreground">Transactions</h2>
@@ -597,7 +620,7 @@ function CardTransactionsSection({ transactions, chain }) {
         </div>
       ) : (
         <div className="space-y-1 max-h-64 sm:max-h-80 overflow-y-auto">
-          {transactions.map((tx) => {
+          {visibleTransactions.map((tx) => {
             const isOutgoing = tx.direction === "out"
             const counterparty = isOutgoing ? tx.to : tx.from
             const statusMeta = getTxStatusMeta(tx.status)
@@ -631,7 +654,7 @@ function CardTransactionsSection({ transactions, chain }) {
                 </div>
                 <div className="text-right shrink-0">
                   <p className="text-sm font-medium">
-                    {isOutgoing ? "-" : "+"}{formatEth(tx.value)} ETH
+                    {isOutgoing ? "-" : "+"}{formatEthFull(tx.value)} ETH
                   </p>
                   <p className="text-xs text-muted-foreground">{formatDate(tx.createdAt)}</p>
                 </div>
@@ -639,8 +662,73 @@ function CardTransactionsSection({ transactions, chain }) {
               </a>
             )
           })}
+          {transactions.length > INLINE_TX_LIMIT && (
+            <button
+              type="button"
+              className="w-full rounded-md border border-border px-3 py-2 text-sm text-muted-foreground hover:bg-accent/50 cursor-pointer"
+              onClick={() => setOpenAll(true)}
+            >
+              View all {transactions.length} transactions
+            </button>
+          )}
         </div>
       )}
+      <Dialog open={openAll} onOpenChange={setOpenAll}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>All Card Transactions</DialogTitle>
+            <DialogDescription>Search by address, amount, or date.</DialogDescription>
+          </DialogHeader>
+          <Input
+            placeholder="Search address, ETH amount, or date..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          <div className="space-y-1 max-h-[55vh] overflow-y-auto">
+            {filteredTransactions.length === 0 ? (
+              <p className="py-6 text-center text-sm text-muted-foreground">No matching transactions.</p>
+            ) : (
+              filteredTransactions.map((tx) => {
+                const isOutgoing = tx.direction === "out"
+                const counterparty = isOutgoing ? tx.to : tx.from
+                const statusMeta = getTxStatusMeta(tx.status)
+                return (
+                  <a
+                    key={tx._id}
+                    href={getExplorerTxUrl(chain, tx.hash)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group flex items-center gap-3 rounded-md px-3 py-2 hover:bg-accent/50 transition-colors"
+                  >
+                    <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${
+                      isOutgoing ? "bg-orange-500/10 text-orange-500" : "bg-green-500/10 text-green-500"
+                    }`}>
+                      {isOutgoing ? <ArrowUpRight className="h-4 w-4" /> : <ArrowDownLeft className="h-4 w-4" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-sm font-medium">{isOutgoing ? "Sent" : "Received"}</p>
+                        <span className={`inline-block h-1.5 w-1.5 rounded-full ${statusMeta.dotClass}`} />
+                      </div>
+                      <p className="text-xs text-muted-foreground font-mono">
+                        {counterparty ? truncateAddress(counterparty) : "Contract"}
+                      </p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="text-sm font-medium">
+                        {isOutgoing ? "-" : "+"}{formatEthFull(tx.value)} ETH
+                      </p>
+                      <p className="text-xs text-muted-foreground">{new Date(tx.createdAt).toLocaleString("en-US")}</p>
+                    </div>
+                    <ExternalLink className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </a>
+                )
+              })
+            )}
+          </div>
+          <DialogFooter />
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
