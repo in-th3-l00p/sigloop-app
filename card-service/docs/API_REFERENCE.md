@@ -2,64 +2,47 @@
 
 Base URL: `http://localhost:8787`
 
-Auth header for protected routes:
+Auth header:
 
 ```http
-x-card-secret: sgl_demo_secret_123
+x-card-secret: sgl_...
 ```
 
-## 1. Health
+All protected routes resolve card + account context from Convex using the secret.
 
-### `GET /health`
-Returns service health.
+## Endpoints
 
-## 2. OpenAPI schema
+1. `GET /health`
+Service health.
 
-### `GET /openapi.json`
-Returns OpenAPI 3.1 schema.
+2. `GET /openapi.json`
+OpenAPI 3.1 schema.
 
-## 3. Card profile
+3. `GET /v1/card/me`
+Card + account profile (no secret, no private key).
 
-### `GET /v1/card/me`
-Returns card metadata (no secret).
+4. `GET /v1/card/balance`
+Live onchain balance (via ZeroDev RPC for the card account chain).
 
-## 4. Balance
+5. `GET /v1/card/limits`
+Current card limit window values:
+- `limit`
+- `spent`
+- `remaining`
+- `resetPeriod`
+- `resetAt`
 
-### `GET /v1/card/balance`
-Returns current card balance and spent amount.
+6. `GET /v1/card/policies`
+Policy list (e.g. `maxPerTx`, `allowedRecipient`, `allowedContract`).
 
-## 5. Limits
+7. `GET /v1/card/summary`
+Profile + live balance + last 5 card transactions.
 
-### `GET /v1/card/limits`
-Returns limit, spent, remaining, reset period, reset timestamp.
+8. `GET /v1/card/transactions?limit=50`
+Transaction history (Convex `transactions` linked by `agentCardId`).
 
-## 6. Policies
-
-### `GET /v1/card/policies`
-Returns policy list.
-
-Supported policy types:
-- `maxPerTx`
-- `allowedRecipient`
-- `allowedContract`
-
-## 7. Summary
-
-### `GET /v1/card/summary`
-Returns profile, key spend numbers, and last 5 transactions.
-
-## 8. Transaction history
-
-### `GET /v1/card/transactions?limit=50`
-Returns card transactions, newest first.
-
-Query params:
-- `limit` (optional, `1..200`, default `50`)
-
-## 9. Transaction quote (preflight)
-
-### `POST /v1/card/transactions/quote`
-Runs policy + limit checks and returns quote details.
+9. `POST /v1/card/transactions/quote`
+Policy/limit/balance preflight check.
 
 Request body:
 
@@ -71,10 +54,8 @@ Request body:
 }
 ```
 
-## 10. Execute transaction
-
-### `POST /v1/card/transactions`
-Performs a transaction when checks pass.
+10. `POST /v1/card/transactions`
+Sends a transaction with ZeroDev kernel and records it in Convex.
 
 Request body:
 
@@ -86,17 +67,13 @@ Request body:
 }
 ```
 
-Returns `201` with created transaction object.
+Returns `201`.
 
-## 11. Pause card
+11. `POST /v1/card/pause`
+Set card status to `paused` in Convex.
 
-### `POST /v1/card/pause`
-Sets card status to `paused`.
-
-## 12. Resume card
-
-### `POST /v1/card/resume`
-Sets card status to `active`.
+12. `POST /v1/card/resume`
+Set card status to `active` in Convex.
 
 ## Error format
 
@@ -119,12 +96,7 @@ Common codes:
 - `MAX_PER_TX_EXCEEDED`
 - `RECIPIENT_NOT_ALLOWED`
 - `CONTRACT_NOT_ALLOWED`
+- `CHAIN_SEND_FAILED`
+- `CONVEX_TX_RECORD_FAILED`
 - `NOT_FOUND`
 - `INTERNAL_ERROR`
-
-## Example cURL
-
-```bash
-curl -s http://localhost:8787/v1/card/summary \
-  -H 'x-card-secret: sgl_demo_secret_123'
-```

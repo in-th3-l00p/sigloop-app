@@ -1,18 +1,40 @@
 # card-service
 
-Minimal TypeScript + Hono REST service for Sigloop-style agent cards.
+Minimal TypeScript + Hono REST service for Sigloop agent cards, backed by Convex and ZeroDev kernel execution.
 
-## Why this fits Sigloop
+## Scope alignment (landing + whitepaper)
 
-From the public landing page and whitepaper (`https://sigloop.tiscacatalin.com`), Sigloop is centered on:
-- agent-scoped wallet controls (card-like API keys),
-- spend limits + policies,
-- auditable transaction trails,
-- programmable card actions.
+The public Sigloop docs position the product around:
+- agent-scoped wallet access via card-like secrets,
+- policy and spending controls,
+- auditable transaction logs,
+- ERC-4337/7579 account abstraction flows.
 
-This service implements that core control plane behind a card secret (`x-card-secret`).
+This service implements that control plane using:
+- Convex for card state, policies, and transaction history,
+- ZeroDev Kernel for transaction execution,
+- `x-card-secret` for card-scoped API auth.
 
-## Quick start
+Sources:
+- https://sigloop.tiscacatalin.com
+- https://sigloop.tiscacatalin.com/whitepaper.pdf
+
+## Environment
+
+Required:
+
+```bash
+CONVEX_URL=https://<your-deployment>.convex.cloud
+```
+
+Optional:
+
+```bash
+PORT=8787
+ZERODEV_PROJECT_ID=00f42aaa-bd75-486b-ad15-851fd20d6177
+```
+
+## Run
 
 ```bash
 cd card-service
@@ -20,12 +42,7 @@ npm install
 npm run dev
 ```
 
-Server: `http://localhost:8787`
-
-Seed demo secret:
-- `sgl_demo_secret_123`
-
-## Authentication
+## Auth
 
 All `/v1/card/*` routes require:
 
@@ -33,15 +50,7 @@ All `/v1/card/*` routes require:
 x-card-secret: sgl_...
 ```
 
-## API reference
+## API docs
 
-Full endpoint reference: [docs/API_REFERENCE.md](./docs/API_REFERENCE.md)
-
-Machine-readable schema:
-- `GET /openapi.json`
-
-## Notes
-
-- Storage is in-memory (`src/data/store.ts`) to keep the service minimal.
-- Replace `InMemoryCardStore` with a Convex/database-backed store for production.
-- Values are wei strings for precision and chain compatibility.
+- Human reference: [docs/API_REFERENCE.md](./docs/API_REFERENCE.md)
+- OpenAPI: `GET /openapi.json`

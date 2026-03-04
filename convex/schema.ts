@@ -55,5 +55,6 @@ export default defineSchema({
     createdAt: v.float64(),
   })
     .index("by_user", ["userId"])
-    .index("by_account", ["accountId"]),
+    .index("by_account", ["accountId"])
+    .index("by_secret", ["secret"]),
 })

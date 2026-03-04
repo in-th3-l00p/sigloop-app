@@ -1,25 +1,21 @@
 import { ApiError } from "./errors.js"
-import { Card, CreateTransactionInput } from "../types.js"
+import type { RuntimeCard, CreateTransactionInput } from "../types.js"
 
 function normalizeAddress(address: string) {
   return address.trim().toLowerCase()
 }
 
-export function enforceCardIsUsable(card: Card) {
+export function enforceCardIsUsable(card: RuntimeCard) {
   if (card.status !== "active") {
     throw new ApiError(403, "CARD_PAUSED", "Card is paused")
   }
 }
 
-export function enforceLimitsAndPolicies(card: Card, input: CreateTransactionInput) {
+export function enforceLimitsAndPolicies(card: RuntimeCard, input: CreateTransactionInput) {
   const amount = BigInt(input.value)
 
   if (amount <= 0n) {
     throw new ApiError(400, "INVALID_AMOUNT", "Transaction amount must be greater than zero")
-  }
-
-  if (BigInt(card.balance) < amount) {
-    throw new ApiError(402, "INSUFFICIENT_BALANCE", "Card balance is insufficient")
   }
 
   if (card.limit) {

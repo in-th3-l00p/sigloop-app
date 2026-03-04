@@ -5,35 +5,42 @@ export interface CardPolicy {
   value: string
 }
 
-export interface Card {
+export interface RuntimeCard {
   id: string
   accountId: string
-  secret: string
   name: string
   status: "active" | "paused"
   chain: string
-  currency: string
-  balance: string
+  balanceAddress: string
   spent: string
   limit?: string
   limitResetPeriod?: "daily" | "weekly" | "monthly"
   limitResetAt?: number
   policies: CardPolicy[]
   createdAt: number
-  updatedAt: number
+}
+
+export interface RuntimeAccount {
+  id: string
+  address: string
+  privateKey: string
+  chain: string
+}
+
+export interface CardRuntimeContext {
+  card: RuntimeCard
+  account: RuntimeAccount
 }
 
 export interface CardTransaction {
   id: string
-  cardId: string
   hash: string
   from: string
   to: string
   value: string
+  direction: string
+  status: string
   chain: string
-  status: "pending" | "confirmed" | "failed"
-  direction: "in" | "out"
-  description?: string
   createdAt: number
 }
 
@@ -41,4 +48,30 @@ export interface CreateTransactionInput {
   to: string
   value: string
   description?: string
+}
+
+export interface CardStore {
+  getRuntimeBySecret(secret: string): Promise<CardRuntimeContext | null>
+  listTransactions(secret: string, limit?: number): Promise<CardTransaction[]>
+  saveTransactionBySecret(secret: string, tx: {
+    hash: string
+    from: string
+    to: string
+    value: string
+    direction: string
+    status: string
+    chain: string
+    description?: string
+  }): Promise<{ txId: string }>
+  setCardStatus(secret: string, status: "active" | "paused"): Promise<{ status: "active" | "paused" }>
+}
+
+export interface ChainGateway {
+  getBalance(chainSlug: string, address: string): Promise<string>
+  sendTransaction(params: {
+    chainSlug: string
+    privateKey: string
+    to: string
+    value: string
+  }): Promise<{ hash: string; status: "pending" | "confirmed" }>
 }

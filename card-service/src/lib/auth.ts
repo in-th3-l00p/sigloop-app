@@ -1,11 +1,11 @@
 import type { MiddlewareHandler } from "hono"
 import { ApiError } from "./errors.js"
-import type { Card } from "../types.js"
-import type { CardStore } from "../data/store.js"
+import type { CardRuntimeContext, CardStore } from "../types.js"
 
 declare module "hono" {
   interface ContextVariableMap {
-    card: Card
+    runtime: CardRuntimeContext
+    cardSecret: string
   }
 }
 
@@ -17,12 +17,13 @@ export function cardAuth(store: CardStore): MiddlewareHandler {
       throw new ApiError(401, "MISSING_SECRET", "Missing x-card-secret header")
     }
 
-    const card = await store.getCardBySecret(secret)
-    if (!card) {
+    const runtime = await store.getRuntimeBySecret(secret)
+    if (!runtime) {
       throw new ApiError(401, "INVALID_SECRET", "Invalid card secret")
     }
 
-    c.set("card", card)
+    c.set("runtime", runtime)
+    c.set("cardSecret", secret)
     await next()
   }
 }
