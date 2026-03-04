@@ -52,6 +52,10 @@ export function CreateIntegrationDialog({ cardId }) {
   const [packageManager, setPackageManager] = useState("npm")
   const [endpointBaseUrl, setEndpointBaseUrl] = useState(CARD_SERVICE_BASE_URL)
   const [toolLibrary, setToolLibrary] = useState("")
+  const [agentPurpose, setAgentPurpose] = useState("")
+  const [taskScope, setTaskScope] = useState("")
+  const [behavioralRules, setBehavioralRules] = useState("")
+  const [escalationPolicy, setEscalationPolicy] = useState("")
   const [isCreating, setIsCreating] = useState(false)
 
   const createFromPreset = useMutation(api.integrations.integrations.createFromPreset)
@@ -70,6 +74,10 @@ export function CreateIntegrationDialog({ cardId }) {
     setPackageManager("npm")
     setEndpointBaseUrl(CARD_SERVICE_BASE_URL)
     setToolLibrary("")
+    setAgentPurpose("")
+    setTaskScope("")
+    setBehavioralRules("")
+    setEscalationPolicy("")
     setIsCreating(false)
   }
 
@@ -109,6 +117,10 @@ export function CreateIntegrationDialog({ cardId }) {
           packageManager: selectedPreset.type === "library" ? packageManager : undefined,
           endpointBaseUrl,
           toolLibrary: toolLibrary || selectedPreset.platform,
+          agentPurpose: selectedPreset.type === "skill" ? agentPurpose : undefined,
+          taskScope: selectedPreset.type === "skill" ? taskScope : undefined,
+          behavioralRules: selectedPreset.type === "skill" ? behavioralRules : undefined,
+          escalationPolicy: selectedPreset.type === "skill" ? escalationPolicy : undefined,
         },
       })
       setOpen(false)
@@ -214,6 +226,43 @@ export function CreateIntegrationDialog({ cardId }) {
                 <Input value={toolLibrary} onChange={(e) => setToolLibrary(e.target.value)} />
               </div>
             )}
+
+            {selectedPreset.type === "skill" && (
+              <>
+                <div className="space-y-2">
+                  <Label>Agent Purpose</Label>
+                  <Input
+                    placeholder="e.g. Execute low-value rebalancing trades"
+                    value={agentPurpose}
+                    onChange={(e) => setAgentPurpose(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Task Scope</Label>
+                  <Input
+                    placeholder="e.g. Swap only approved tokens and recipients"
+                    value={taskScope}
+                    onChange={(e) => setTaskScope(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Behavior Rules</Label>
+                  <Input
+                    placeholder="e.g. Always quote first, never bypass policy checks"
+                    value={behavioralRules}
+                    onChange={(e) => setBehavioralRules(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Escalation Policy</Label>
+                  <Input
+                    placeholder="e.g. If error twice, stop and ask human approval"
+                    value={escalationPolicy}
+                    onChange={(e) => setEscalationPolicy(e.target.value)}
+                  />
+                </div>
+              </>
+            )}
           </div>
         )}
 
@@ -260,6 +309,26 @@ export function CreateIntegrationDialog({ cardId }) {
                 <span className="text-muted-foreground">Tool Library</span>
                 <span>{toolLibrary || selectedPreset.platform}</span>
               </div>
+            )}
+            {selectedPreset.type === "skill" && (
+              <>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Agent Purpose</span>
+                  <span className="text-right max-w-[60%]">{agentPurpose || "Not set"}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Task Scope</span>
+                  <span className="text-right max-w-[60%]">{taskScope || "Not set"}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Behavior Rules</span>
+                  <span className="text-right max-w-[60%]">{behavioralRules || "Not set"}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Escalation Policy</span>
+                  <span className="text-right max-w-[60%]">{escalationPolicy || "Not set"}</span>
+                </div>
+              </>
             )}
           </div>
         )}

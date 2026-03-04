@@ -127,3 +127,28 @@
     min-height: 100vh;
   }
 }
+
+@layer components {
+  .integration-code-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: oklch(0.56 0.25 302 / 0.8) transparent;
+  }
+
+  .integration-code-scroll::-webkit-scrollbar {
+    height: 8px;
+    width: 8px;
+  }
+
+  .integration-code-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .integration-code-scroll::-webkit-scrollbar-thumb {
+    background: oklch(0.56 0.25 302 / 0.75);
+    border-radius: 999px;
+  }
+
+  .integration-code-scroll::-webkit-scrollbar-thumb:hover {
+    background: oklch(0.56 0.25 302 / 0.95);
+  }
+}

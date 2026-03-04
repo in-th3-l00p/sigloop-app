@@ -49,6 +49,10 @@ export default function CardDashboardPage() {
     api.agentCards.agentCards.get,
     cardId ? { id: cardId } : "skip"
   )
+  const account = useQuery(
+    api.accounts.smartAccounts.get,
+    card?.accountId ? { id: card.accountId } : "skip"
+  )
 
   const cardWithSecret = useQuery(
     api.agentCards.agentCards.getWithSecret,
@@ -125,6 +129,9 @@ export default function CardDashboardPage() {
         <PoliciesSection card={card} updateCard={updateCard} />
         <CardIntegrationsSection
           cardId={card._id}
+          card={card}
+          chain={account?.chain}
+          accountAddress={account?.address}
           cardSecret={cardWithSecret?.secret}
         />
         <CardTransactionsSection transactions={transactions} chain={card.chain} />

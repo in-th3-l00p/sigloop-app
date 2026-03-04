@@ -28,7 +28,6 @@ export const INTEGRATION_PRESETS: IntegrationPreset[] = [
     schemaVersion: 1,
     docsUrl: "https://developers.openai.com",
     skillDownloadUrl: `${CARD_SERVICE_BASE_URL}/downloads/skills/codex-sigloop-skill.zip`,
-    envTemplate: `SIGLOOP_CARD_SECRET=sgl_...\nSIGLOOP_CARD_SERVICE_URL=${CARD_SERVICE_BASE_URL}`,
   },
   {
     id: "openclaw-skill",
@@ -39,7 +38,6 @@ export const INTEGRATION_PRESETS: IntegrationPreset[] = [
     schemaVersion: 1,
     docsUrl: "https://github.com/openclaw",
     skillDownloadUrl: `${CARD_SERVICE_BASE_URL}/downloads/skills/openclaw-sigloop-skill.zip`,
-    envTemplate: `SIGLOOP_CARD_SECRET=sgl_...\nSIGLOOP_CARD_SERVICE_URL=${CARD_SERVICE_BASE_URL}`,
   },
   {
     id: "langchain-library-js",

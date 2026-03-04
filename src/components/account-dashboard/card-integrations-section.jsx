@@ -1,9 +1,8 @@
 import { useMemo, useState } from "react"
 import { useMutation, useQuery } from "convex/react"
 import { api } from "../../../convex/_generated/api"
-import { ExternalLink, Download, Copy, Check, FlaskConical, Trash2 } from "lucide-react"
+import { ExternalLink, Download, Copy, Check, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import {
   Drawer,
   DrawerClose,
@@ -20,21 +19,15 @@ import {
   getPresetById,
 } from "@/lib/integration-registry"
 import { CreateIntegrationDialog } from "./create-integration-dialog"
-
-function statusBadge(status) {
-  if (status === "verified") return "default"
-  if (status === "error") return "destructive"
-  if (status === "configured") return "secondary"
-  return "outline"
-}
-
-function statusLabel(status) {
-  if (status === "not_started") return "Not Started"
-  if (status === "configured") return "Configured"
-  if (status === "verified") return "Verified"
-  if (status === "error") return "Error"
-  return status
-}
+import { downloadSkillArtifact, generateSkillArtifact } from "@/lib/skill-generator"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 
 function CopyBlock({ title, value, onAction }) {
   const [copied, copy] = useCopyToClipboard()
@@ -57,7 +50,7 @@ function CopyBlock({ title, value, onAction }) {
           {copied ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
         </Button>
       </div>
-      <pre className="max-h-40 overflow-auto rounded bg-muted/50 p-2 text-xs leading-relaxed">{value}</pre>
+      <pre className="integration-code-scroll max-h-40 overflow-auto rounded bg-muted/50 p-2 text-xs leading-relaxed">{value}</pre>
     </div>
   )
 }
@@ -66,36 +59,35 @@ function IntegrationDrawerContent({
   integration,
   preset,
   cardSecret,
+  cardContext,
   onSetupInteraction,
-  onVerify,
   onRemove,
-  isVerifying,
 }) {
   const fullApiDocs = `${CARD_SERVICE_BASE_URL}/openapi.json`
+  const [confirmOpen, setConfirmOpen] = useState(false)
+
+  const handleSkillDownload = () => {
+    if (!cardSecret) return
+    const artifact = generateSkillArtifact({
+      preset,
+      integration,
+      cardSecret,
+      cardContext,
+      baseUrl: CARD_SERVICE_BASE_URL,
+    })
+    downloadSkillArtifact(artifact)
+    onSetupInteraction(integration._id)
+  }
 
   return (
     <>
       <DrawerHeader>
-        <DrawerTitle className="flex items-center gap-2">
-          {integration.name}
-          <Badge variant={statusBadge(integration.status)}>{statusLabel(integration.status)}</Badge>
-        </DrawerTitle>
+        <DrawerTitle>{integration.name}</DrawerTitle>
         <DrawerDescription>{integration.description}</DrawerDescription>
       </DrawerHeader>
 
       <div className="space-y-4 px-4 pb-2 overflow-y-auto">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <Badge variant="outline">{integration.type}</Badge>
-          <span>{integration.platform}</span>
-        </div>
-
         <div className="flex items-center gap-2">
-          <a href={preset.docsUrl} target="_blank" rel="noopener noreferrer">
-            <Button variant="outline" size="sm" className="cursor-pointer gap-1.5">
-              <ExternalLink className="h-3.5 w-3.5" />
-              Platform Docs
-            </Button>
-          </a>
           {integration.type === "api" && (
             <a href={fullApiDocs} target="_blank" rel="noopener noreferrer">
               <Button variant="outline" size="sm" className="cursor-pointer gap-1.5">
@@ -106,16 +98,15 @@ function IntegrationDrawerContent({
           )}
         </div>
 
-        {integration.type === "skill" && preset.skillDownloadUrl && (
-          <a href={preset.skillDownloadUrl} target="_blank" rel="noopener noreferrer">
-            <Button
-              className="cursor-pointer gap-1.5"
-              onClick={() => onSetupInteraction(integration._id)}
-            >
-              <Download className="h-3.5 w-3.5" />
-              Download Skill
-            </Button>
-          </a>
+        {integration.type === "skill" && (
+          <Button
+            className="cursor-pointer gap-1.5"
+            disabled={!cardSecret}
+            onClick={handleSkillDownload}
+          >
+            <Download className="h-3.5 w-3.5" />
+            Download Skill
+          </Button>
         )}
 
         {integration.type === "api" && preset.curatedEndpoints?.length > 0 && (
@@ -134,9 +125,26 @@ function IntegrationDrawerContent({
           </div>
         )}
 
-        <CopyBlock title="Env" value={preset.envTemplate} onAction={() => onSetupInteraction(integration._id)} />
+        {integration.type !== "skill" && (
+          <CopyBlock title="Env" value={preset.envTemplate} onAction={() => onSetupInteraction(integration._id)} />
+        )}
         <CopyBlock title="Install" value={preset.installCommand} onAction={() => onSetupInteraction(integration._id)} />
         <CopyBlock title="Snippet" value={preset.snippet} onAction={() => onSetupInteraction(integration._id)} />
+
+        {integration.type === "skill" && (
+          <div className="space-y-2 rounded-md border border-border p-3">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              Information Given To Agent
+            </p>
+            <ul className="space-y-1 text-xs text-muted-foreground">
+              <li>Card identity: name, status, account address, chain.</li>
+              <li>Spending context: limit, spent, and active card policies.</li>
+              <li>Secure tool auth: x-card-secret for card-service API calls.</li>
+              <li>Operational flow: check limits/policies, quote, then execute tx.</li>
+              <li>Your customization: purpose, scope, behavior rules, escalation policy.</li>
+            </ul>
+          </div>
+        )}
 
         {integration.verificationMessage && (
           <p className="text-xs text-muted-foreground">Last verification: {integration.verificationMessage}</p>
@@ -146,17 +154,9 @@ function IntegrationDrawerContent({
       <DrawerFooter>
         <div className="flex items-center gap-2">
           <Button
-            className="cursor-pointer gap-1.5"
-            disabled={!cardSecret || isVerifying}
-            onClick={() => onVerify(integration)}
-          >
-            <FlaskConical className="h-3.5 w-3.5" />
-            {isVerifying ? "Verifying..." : "Test Integration"}
-          </Button>
-          <Button
             variant="destructive"
             className="cursor-pointer gap-1.5"
-            onClick={() => onRemove(integration._id)}
+            onClick={() => setConfirmOpen(true)}
           >
             <Trash2 className="h-3.5 w-3.5" />
             Remove
@@ -166,17 +166,40 @@ function IntegrationDrawerContent({
           </DrawerClose>
         </div>
       </DrawerFooter>
+      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Remove Integration?</DialogTitle>
+            <DialogDescription>
+              This will permanently remove <strong>{integration.name}</strong> from this card.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" className="cursor-pointer" onClick={() => setConfirmOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              className="cursor-pointer"
+              onClick={() => {
+                onRemove(integration._id)
+                setConfirmOpen(false)
+              }}
+            >
+              Remove
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }
 
-export function CardIntegrationsSection({ cardId, cardSecret }) {
+export function CardIntegrationsSection({ cardId, cardSecret, card, chain, accountAddress }) {
   const [selectedIntegrationId, setSelectedIntegrationId] = useState(null)
-  const [isVerifying, setIsVerifying] = useState(false)
 
   const integrations = useQuery(api.integrations.integrations.listByCard, { cardId })
   const recordSetupInteraction = useMutation(api.integrations.integrations.recordSetupInteraction)
-  const setVerificationResult = useMutation(api.integrations.integrations.setVerificationResult)
   const removeIntegration = useMutation(api.integrations.integrations.remove)
 
   const selectedIntegration = useMemo(
@@ -197,41 +220,19 @@ export function CardIntegrationsSection({ cardId, cardSecret }) {
       }
     : null)
 
-  const handleVerify = async (integration) => {
-    if (!cardSecret) return
-
-    setIsVerifying(true)
-    try {
-      const response = await fetch(`${CARD_SERVICE_BASE_URL}/v1/card/summary`, {
-        headers: {
-          "x-card-secret": cardSecret,
-        },
-      })
-
-      if (!response.ok) {
-        const text = await response.text()
-        await setVerificationResult({
-          id: integration._id,
-          success: false,
-          message: text || `HTTP ${response.status}`,
-        })
-        return
-      }
-
-      await setVerificationResult({
-        id: integration._id,
-        success: true,
-        message: "Verified using /v1/card/summary",
-      })
-    } catch (error) {
-      await setVerificationResult({
-        id: integration._id,
-        success: false,
-        message: error instanceof Error ? error.message : "Verification failed",
-      })
-    } finally {
-      setIsVerifying(false)
-    }
+  const cardContext = {
+    name: card?.name,
+    status: card?.status,
+    limit: card?.limit,
+    spent: card?.spent,
+    policies: card?.policies ?? [],
+    accountId: card?.accountId,
+    chain,
+    accountAddress,
+    agentPurpose: selectedIntegration?.config?.agentPurpose,
+    taskScope: selectedIntegration?.config?.taskScope,
+    behavioralRules: selectedIntegration?.config?.behavioralRules,
+    escalationPolicy: selectedIntegration?.config?.escalationPolicy,
   }
 
   const handleRemove = async (id) => {
@@ -272,12 +273,9 @@ export function CardIntegrationsSection({ cardId, cardSecret }) {
                   onClick={() => setSelectedIntegrationId(integration._id)}
                   className="cursor-pointer w-full rounded-md border border-border p-3 text-left hover:bg-accent/40"
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-sm font-medium">{integration.name}</p>
-                      <p className="text-xs text-muted-foreground mt-1">{integration.description}</p>
-                    </div>
-                    <Badge variant={statusBadge(integration.status)}>{statusLabel(integration.status)}</Badge>
+                  <div>
+                    <p className="text-sm font-medium">{integration.name}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{integration.description}</p>
                   </div>
                 </button>
               </DrawerTrigger>
@@ -290,9 +288,8 @@ export function CardIntegrationsSection({ cardId, cardSecret }) {
                 integration={selectedIntegration}
                 preset={drawerPreset}
                 cardSecret={cardSecret}
-                isVerifying={isVerifying}
+                cardContext={cardContext}
                 onSetupInteraction={(id) => recordSetupInteraction({ id })}
-                onVerify={handleVerify}
                 onRemove={handleRemove}
               />
             )}

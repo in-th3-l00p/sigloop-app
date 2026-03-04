@@ -8,6 +8,10 @@ const configValidator = v.optional(v.object({
   packageManager: v.optional(v.string()),
   endpointBaseUrl: v.optional(v.string()),
   toolLibrary: v.optional(v.string()),
+  agentPurpose: v.optional(v.string()),
+  taskScope: v.optional(v.string()),
+  behavioralRules: v.optional(v.string()),
+  escalationPolicy: v.optional(v.string()),
 }))
 
 export const createFromPreset = mutation({
@@ -116,5 +120,32 @@ export const remove = mutation({
       throw new Error("Integration not found")
     }
     await ctx.db.delete(args.id)
+  },
+})
+
+export const updateConfig = mutation({
+  args: {
+    id: v.id("integrations"),
+    config: configValidator,
+  },
+  handler: async (ctx, args) => {
+    const userId = await requireAuth(ctx, "integrations.updateConfig")
+    const integration = await ctx.db.get(args.id)
+    if (!integration || integration.userId !== userId) {
+      throw new Error("Integration not found")
+    }
+
+    const mergedConfig = {
+      ...(integration.config ?? {}),
+      ...(args.config ?? {}),
+    }
+
+    await ctx.db.patch(args.id, {
+      config: mergedConfig,
+      status: integration.status === "verified" ? "verified" : "configured",
+      updatedAt: Date.now(),
+    })
+
+    return { ...integration, config: mergedConfig }
   },
 })
