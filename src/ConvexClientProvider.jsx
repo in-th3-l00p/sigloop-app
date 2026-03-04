@@ -18,7 +18,6 @@ function useAuthFromPrivy() {
         const token = await getAccessToken()
         if (token) {
           console.log("[auth-bridge] token obtained, length:", token.length)
-          // Log decoded payload (non-sensitive claims) for debugging
           try {
             const payload = JSON.parse(atob(token.split(".")[1]))
             console.log("[auth-bridge] token payload:", {

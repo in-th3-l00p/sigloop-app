@@ -1,10 +1,17 @@
 import { Routes, Route, Navigate } from "react-router-dom"
+import { usePrivy } from "@privy-io/react-auth"
 import LoginPage from "@/pages/login"
 import DashboardPage from "@/pages/dashboard"
 import AccountDashboardPage from "@/pages/account-dashboard"
 import CardDashboardPage from "@/pages/card-dashboard"
 
 function App() {
+  const { ready } = usePrivy()
+
+  if (!ready) {
+    return null
+  }
+
   return (
     <Routes>
       <Route path="/app" element={<LoginPage />} />
