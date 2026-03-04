@@ -1,3 +1,15 @@
+export const DEFAULT_API_SCOPES = ["read", "write", "tx"] as const
+
+export function hasScope(scopes: string[], requiredScope: string): boolean {
+  if (scopes.includes("admin")) return true
+  return scopes.includes(requiredScope)
+}
+
+export function normalizeIp(value?: string): string | undefined {
+  if (!value) return undefined
+  return value.trim().toLowerCase()
+}
+
 export function hashApiKey(value: string): string {
   let hash = 2166136261
   for (let i = 0; i < value.length; i += 1) {

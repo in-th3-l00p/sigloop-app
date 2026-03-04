@@ -38,7 +38,8 @@ export default defineSchema({
     .index("by_account", ["accountId"])
     .index("by_user", ["userId"])
     .index("by_card", ["agentCardId"])
-    .index("by_card_idempotency", ["agentCardId", "idempotencyKey"]),
+    .index("by_card_idempotency", ["agentCardId", "idempotencyKey"])
+    .index("by_account_idempotency", ["accountId", "idempotencyKey"]),
 
   agentCards: defineTable({
     userId: v.string(),
@@ -97,6 +98,9 @@ export default defineSchema({
     name: v.string(),
     keyHash: v.string(),
     keyPrefix: v.string(),
+    scopes: v.array(v.string()),
+    ipAllowlist: v.optional(v.array(v.string())),
+    rateLimitPerMinute: v.optional(v.float64()),
     status: v.union(v.literal("active"), v.literal("revoked")),
     lastUsedAt: v.optional(v.float64()),
     createdAt: v.float64(),
@@ -113,6 +117,7 @@ export default defineSchema({
     statusCode: v.float64(),
     durationMs: v.float64(),
     requestId: v.string(),
+    ipAddress: v.optional(v.string()),
     createdAt: v.float64(),
   })
     .index("by_user", ["userId"])
