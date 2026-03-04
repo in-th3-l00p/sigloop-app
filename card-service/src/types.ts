@@ -54,6 +54,16 @@ export interface CreateTransactionInput {
 export interface CardStore {
   getRuntimeBySecret(secret: string): Promise<CardRuntimeContext | null>
   listTransactions(secret: string, limit?: number): Promise<CardTransaction[]>
+  prepareTransactionBySecret(secret: string, input: {
+    to: string
+    value: string
+    idempotencyKey: string
+  }): Promise<{ mode: "existing" | "reserved"; txId: string; hash: string; status: TxStatus }>
+  finalizePreparedTransactionBySecret(secret: string, input: {
+    txId: string
+    hash: string
+    status: TxStatus
+  }): Promise<void>
   saveTransactionBySecret(secret: string, tx: {
     hash: string
     from: string

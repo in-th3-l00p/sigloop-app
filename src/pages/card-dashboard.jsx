@@ -25,7 +25,7 @@ import {
 } from "lucide-react"
 import { truncateAddress, formatDate, formatEth, isValidAddress } from "@/lib/format"
 import { getExplorerTxUrl } from "@/lib/explorer"
-import { getTxStatusMeta } from "@/lib/tx-status"
+import { getTxStatusMeta, TX_STATUS_LEGEND } from "@/lib/tx-status"
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "@/components/ui/button"
@@ -561,6 +561,17 @@ function CardTransactionsSection({ transactions, chain }) {
   return (
     <div className="rounded-lg border border-border p-5 space-y-4">
       <h2 className="text-sm font-medium text-muted-foreground">Transactions</h2>
+      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+        {TX_STATUS_LEGEND.map((item) => {
+          const meta = getTxStatusMeta(item.status)
+          return (
+            <div key={item.status} className="flex items-center gap-1.5">
+              <span className={`inline-block h-1.5 w-1.5 rounded-full ${meta.dotClass}`} />
+              <span>{item.label}</span>
+            </div>
+          )
+        })}
+      </div>
 
       {transactions === undefined ? (
         <div className="space-y-3">

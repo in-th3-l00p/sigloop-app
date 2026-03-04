@@ -31,6 +31,10 @@ function buildStore(): CardStore {
     async listTransactions() {
       return []
     },
+    async prepareTransactionBySecret() {
+      return { mode: "reserved" as const, txId: "tx_1", hash: "pending:idem", status: "progress" as const }
+    },
+    async finalizePreparedTransactionBySecret() {},
     async saveTransactionBySecret() {
       return { txId: "tx_1" }
     },
@@ -80,6 +84,7 @@ describe("card-service app", () => {
       headers: {
         "content-type": "application/json",
         "x-card-secret": "sgl_test",
+        "idempotency-key": "idem-1",
       },
       body: JSON.stringify({
         to: "0x0000000000000000000000000000000000000002",
@@ -90,5 +95,22 @@ describe("card-service app", () => {
     expect(res.status).toBe(201)
     const body = await res.json()
     expect(body.transaction.hash).toBe("0xabc")
+  })
+
+  it("rejects missing idempotency key", async () => {
+    const app = createApp(buildStore(), buildGateway())
+    const res = await app.request("http://localhost/v1/card/transactions", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-card-secret": "sgl_test",
+      },
+      body: JSON.stringify({
+        to: "0x0000000000000000000000000000000000000002",
+        value: "10",
+      }),
+    })
+
+    expect(res.status).toBe(400)
   })
 })

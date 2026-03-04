@@ -98,6 +98,39 @@ export class ConvexCardStore implements CardStore {
     }))
   }
 
+  async prepareTransactionBySecret(secret: string, input: {
+    to: string
+    value: string
+    idempotencyKey: string
+  }): Promise<{ mode: "existing" | "reserved"; txId: string; hash: string; status: TxStatus }> {
+    try {
+      const result = await this.client.mutation("agentCards/service:prepareCardTransactionBySecret" as any, {
+        secret,
+        ...input,
+      }) as { mode: "existing" | "reserved"; txId: string; hash: string; status: TxStatus }
+      return result
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to prepare transaction"
+      if (message.includes("Idempotency key reuse with different payload")) {
+        throw new ApiError(409, "IDEMPOTENCY_KEY_CONFLICT", message)
+      }
+      throw new ApiError(400, "PREPARE_TX_FAILED", message)
+    }
+  }
+
+  async finalizePreparedTransactionBySecret(secret: string, input: {
+    txId: string
+    hash: string
+    status: TxStatus
+  }): Promise<void> {
+    await this.client.mutation("agentCards/service:finalizePreparedCardTransactionBySecret" as any, {
+      secret,
+      txId: input.txId,
+      hash: input.hash,
+      status: input.status,
+    })
+  }
+
   async saveTransactionBySecret(secret: string, tx: {
     hash: string
     from: string

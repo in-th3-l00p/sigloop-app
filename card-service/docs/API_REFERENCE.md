@@ -56,6 +56,11 @@ Request body:
 
 10. `POST /v1/card/transactions`
 Sends a transaction with ZeroDev kernel and records it in Convex.
+Requires header:
+
+```http
+idempotency-key: <unique-client-key>
+```
 
 Request body:
 
@@ -102,5 +107,7 @@ Common codes:
 - `CONTRACT_NOT_ALLOWED`
 - `CHAIN_SEND_FAILED`
 - `CONVEX_TX_RECORD_FAILED`
+- `MISSING_IDEMPOTENCY_KEY`
+- `IDEMPOTENCY_KEY_CONFLICT`
 - `NOT_FOUND`
 - `INTERNAL_ERROR`

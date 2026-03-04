@@ -46,6 +46,45 @@ function applyResetIfNeeded(card: {
   return null
 }
 
+function assertCardPolicyAndLimits(card: {
+  status: string
+  limit?: string
+  spent: string
+  policies?: Array<{ type: string; value: string }>
+}, to: string, value: string) {
+  const amount = BigInt(value)
+
+  if (card.status !== "active") {
+    throw new Error("Card paused")
+  }
+
+  if (amount <= 0n) {
+    throw new Error("Invalid amount")
+  }
+
+  if (card.limit && BigInt(card.spent || "0") + amount > BigInt(card.limit)) {
+    throw new Error("Card limit exceeded")
+  }
+
+  for (const policy of card.policies ?? []) {
+    if (policy.type === "maxPerTx" && amount > BigInt(policy.value)) {
+      throw new Error("Max per transaction exceeded")
+    }
+
+    if (policy.type === "allowedRecipient") {
+      if (normalizeAddress(to) !== normalizeAddress(policy.value)) {
+        throw new Error("Recipient not allowed")
+      }
+    }
+
+    if (policy.type === "allowedContract") {
+      if (normalizeAddress(to) !== normalizeAddress(policy.value)) {
+        throw new Error("Contract not allowed")
+      }
+    }
+  }
+}
+
 export const getRuntimeContextBySecret = query({
   args: { secret: v.string() },
   handler: async (ctx, args) => {
@@ -143,6 +182,7 @@ export const upsertCardTransactionBySecret = mutation({
     status: v.union(v.literal("progress"), v.literal("success"), v.literal("error")),
     chain: v.string(),
     description: v.optional(v.string()),
+    idempotencyKey: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const card = await ctx.db
@@ -160,38 +200,10 @@ export const upsertCardTransactionBySecret = mutation({
 
     const resetPatch = applyResetIfNeeded(card)
     const spentBaseline = resetPatch ? "0" : card.spent
+    const effectiveCard = { ...card, spent: spentBaseline }
+    assertCardPolicyAndLimits(effectiveCard, args.to, args.value)
     const spentBefore = BigInt(spentBaseline || "0")
     const value = BigInt(args.value)
-
-    if (card.status !== "active") {
-      throw new Error("Card paused")
-    }
-
-    if (value <= 0n) {
-      throw new Error("Invalid amount")
-    }
-
-    if (card.limit && spentBefore + value > BigInt(card.limit)) {
-      throw new Error("Card limit exceeded")
-    }
-
-    for (const policy of card.policies ?? []) {
-      if (policy.type === "maxPerTx" && value > BigInt(policy.value)) {
-        throw new Error("Max per transaction exceeded")
-      }
-
-      if (policy.type === "allowedRecipient") {
-        if (normalizeAddress(args.to) !== normalizeAddress(policy.value)) {
-          throw new Error("Recipient not allowed")
-        }
-      }
-
-      if (policy.type === "allowedContract") {
-        if (normalizeAddress(args.to) !== normalizeAddress(policy.value)) {
-          throw new Error("Contract not allowed")
-        }
-      }
-    }
 
     const txId = await ctx.db.insert("transactions", {
       userId: card.userId,
@@ -204,6 +216,7 @@ export const upsertCardTransactionBySecret = mutation({
       status: args.status,
       chain: args.chain,
       agentCardId: card._id,
+      idempotencyKey: args.idempotencyKey,
       createdAt: Date.now(),
     })
 
@@ -216,6 +229,127 @@ export const upsertCardTransactionBySecret = mutation({
       txId,
       description: args.description,
     }
+  },
+})
+
+export const prepareCardTransactionBySecret = mutation({
+  args: {
+    secret: v.string(),
+    to: v.string(),
+    value: v.string(),
+    idempotencyKey: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const card = await ctx.db
+      .query("agentCards")
+      .withIndex("by_secret", (q) => q.eq("secret", args.secret))
+      .first()
+    if (!card) {
+      throw new Error("Card not found")
+    }
+
+    const account = await ctx.db.get(card.accountId)
+    if (!account) {
+      throw new Error("Account not found")
+    }
+
+    const existing = await ctx.db
+      .query("transactions")
+      .withIndex("by_card_idempotency", (q) =>
+        q.eq("agentCardId", card._id).eq("idempotencyKey", args.idempotencyKey)
+      )
+      .first()
+
+    if (existing) {
+      if (
+        normalizeAddress(existing.to) !== normalizeAddress(args.to) ||
+        existing.value !== args.value
+      ) {
+        throw new Error("Idempotency key reuse with different payload")
+      }
+      return {
+        mode: "existing",
+        txId: existing._id,
+        hash: existing.hash,
+        status: existing.status,
+      }
+    }
+
+    const resetPatch = applyResetIfNeeded(card)
+    const spentBaseline = resetPatch ? "0" : card.spent
+    const effectiveCard = { ...card, spent: spentBaseline }
+    assertCardPolicyAndLimits(effectiveCard, args.to, args.value)
+
+    const spentBefore = BigInt(spentBaseline || "0")
+    const amount = BigInt(args.value)
+
+    const txId = await ctx.db.insert("transactions", {
+      userId: card.userId,
+      accountId: card.accountId,
+      hash: `pending:${args.idempotencyKey}`,
+      from: account.address,
+      to: args.to,
+      value: args.value,
+      direction: "out",
+      status: "progress",
+      chain: account.chain,
+      agentCardId: card._id,
+      idempotencyKey: args.idempotencyKey,
+      createdAt: Date.now(),
+    })
+
+    await ctx.db.patch(card._id, {
+      spent: (spentBefore + amount).toString(),
+      ...(resetPatch ?? {}),
+    })
+
+    return {
+      mode: "reserved",
+      txId,
+      hash: `pending:${args.idempotencyKey}`,
+      status: "progress",
+    }
+  },
+})
+
+export const finalizePreparedCardTransactionBySecret = mutation({
+  args: {
+    secret: v.string(),
+    txId: v.id("transactions"),
+    hash: v.string(),
+    status: v.union(v.literal("progress"), v.literal("success"), v.literal("error")),
+  },
+  handler: async (ctx, args) => {
+    const card = await ctx.db
+      .query("agentCards")
+      .withIndex("by_secret", (q) => q.eq("secret", args.secret))
+      .first()
+    if (!card) {
+      throw new Error("Card not found")
+    }
+
+    const tx = await ctx.db.get(args.txId)
+    if (!tx || tx.agentCardId !== card._id) {
+      throw new Error("Transaction not found")
+    }
+
+    if (tx.status === "success" || tx.status === "error") {
+      return tx
+    }
+
+    await ctx.db.patch(tx._id, {
+      hash: args.hash,
+      status: args.status,
+    })
+
+    if (args.status === "error") {
+      const nextSpent = BigInt(card.spent || "0") - BigInt(tx.value || "0")
+      await ctx.db.patch(card._id, {
+        spent: (nextSpent > 0n ? nextSpent : 0n).toString(),
+      })
+    }
+
+    return { ...tx, hash: args.hash, status: args.status }
   },
 })
 

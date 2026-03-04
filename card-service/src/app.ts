@@ -125,6 +125,11 @@ export function createApp(store: CardStore, chainGateway: ChainGateway) {
     const runtime = c.get("runtime")
     const secret = c.get("cardSecret")
     const input = c.req.valid("json")
+    const idempotencyKey = c.req.header("idempotency-key")
+
+    if (!idempotencyKey) {
+      throw new ApiError(400, "MISSING_IDEMPOTENCY_KEY", "Missing idempotency-key header")
+    }
 
     enforceCardIsUsable(runtime.card)
     enforceLimitsAndPolicies(runtime.card, input)
@@ -134,25 +139,50 @@ export function createApp(store: CardStore, chainGateway: ChainGateway) {
       throw new ApiError(402, "INSUFFICIENT_BALANCE", "Card balance is insufficient")
     }
 
-    const sent = await chainGateway.sendTransaction({
-      chainSlug: runtime.account.chain,
-      privateKey: runtime.account.privateKey,
+    const prepared = await store.prepareTransactionBySecret(secret, {
       to: input.to,
       value: input.value,
+      idempotencyKey,
     })
 
-    const tx = {
-      hash: sent.hash,
-      from: runtime.account.address,
-      to: input.to,
-      value: input.value,
-      direction: "out",
-      status: sent.status,
-      chain: runtime.account.chain,
-      description: input.description,
+    if (prepared.mode === "existing") {
+      return c.json({
+        transaction: {
+          hash: prepared.hash,
+          from: runtime.account.address,
+          to: input.to,
+          value: input.value,
+          direction: "out",
+          status: prepared.status,
+          chain: runtime.account.chain,
+          description: input.description,
+        },
+        idempotentReplay: true,
+      })
     }
 
-    await store.saveTransactionBySecret(secret, tx)
+    let sent: { hash: string; status: "progress" | "success" } | null = null
+    try {
+      sent = await chainGateway.sendTransaction({
+        chainSlug: runtime.account.chain,
+        privateKey: runtime.account.privateKey,
+        to: input.to,
+        value: input.value,
+      })
+    } catch (error) {
+      await store.finalizePreparedTransactionBySecret(secret, {
+        txId: prepared.txId,
+        hash: prepared.hash,
+        status: "error",
+      })
+      throw error
+    }
+
+    await store.finalizePreparedTransactionBySecret(secret, {
+      txId: prepared.txId,
+      hash: sent.hash,
+      status: sent.status,
+    })
 
     if (sent.status === "progress") {
       const retryWindowMs = Number(process.env.TX_RETRY_WINDOW_MS ?? 120000)
@@ -160,6 +190,7 @@ export function createApp(store: CardStore, chainGateway: ChainGateway) {
         store,
         chainGateway,
         secret,
+        txId: prepared.txId,
         hash: sent.hash,
         chainSlug: runtime.account.chain,
         privateKey: runtime.account.privateKey,
@@ -167,7 +198,18 @@ export function createApp(store: CardStore, chainGateway: ChainGateway) {
       })
     }
 
-    return c.json({ transaction: tx }, 201)
+    return c.json({
+      transaction: {
+        hash: sent.hash,
+        from: runtime.account.address,
+        to: input.to,
+        value: input.value,
+        direction: "out",
+        status: sent.status,
+        chain: runtime.account.chain,
+        description: input.description,
+      },
+    }, 201)
   })
 
   app.post("/v1/card/pause", async (c) => {

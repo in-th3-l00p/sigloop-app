@@ -4,6 +4,7 @@ export async function trackProgressTransaction(params: {
   store: CardStore
   chainGateway: ChainGateway
   secret: string
+  txId: string
   hash: string
   chainSlug: string
   privateKey: string
@@ -16,9 +17,9 @@ export async function trackProgressTransaction(params: {
     timeoutMs: params.timeoutMs,
   })
 
-  await params.store.setCardTransactionStatus(
-    params.secret,
-    params.hash,
-    result.status,
-  )
+  await params.store.finalizePreparedTransactionBySecret(params.secret, {
+    txId: params.txId,
+    hash: result.finalHash ?? params.hash,
+    status: result.status,
+  })
 }

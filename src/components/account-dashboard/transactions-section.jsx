@@ -3,7 +3,7 @@ import { api } from "../../../convex/_generated/api"
 import { ArrowDownLeft, ArrowUpRight, ExternalLink } from "lucide-react"
 import { truncateAddress, formatDate, formatEth } from "@/lib/format"
 import { getExplorerTxUrl } from "@/lib/explorer"
-import { getTxStatusMeta } from "@/lib/tx-status"
+import { getTxStatusMeta, TX_STATUS_LEGEND } from "@/lib/tx-status"
 import { SendDialog } from "./send-dialog"
 import { ContactsDialog } from "./contacts-dialog"
 
@@ -21,6 +21,17 @@ export function TransactionsSection({ account }) {
           <ContactsDialog />
           <SendDialog account={account} />
         </div>
+      </div>
+      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+        {TX_STATUS_LEGEND.map((item) => {
+          const meta = getTxStatusMeta(item.status)
+          return (
+            <div key={item.status} className="flex items-center gap-1.5">
+              <span className={`inline-block h-1.5 w-1.5 rounded-full ${meta.dotClass}`} />
+              <span>{item.label}</span>
+            </div>
+          )
+        })}
       </div>
 
       {transactions === undefined ? (

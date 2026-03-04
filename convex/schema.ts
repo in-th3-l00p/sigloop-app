@@ -33,10 +33,12 @@ export default defineSchema({
     chain: v.string(),
     createdAt: v.float64(),
     agentCardId: v.optional(v.id("agentCards")),
+    idempotencyKey: v.optional(v.string()),
   })
     .index("by_account", ["accountId"])
     .index("by_user", ["userId"])
-    .index("by_card", ["agentCardId"]),
+    .index("by_card", ["agentCardId"])
+    .index("by_card_idempotency", ["agentCardId", "idempotencyKey"]),
 
   agentCards: defineTable({
     userId: v.string(),
