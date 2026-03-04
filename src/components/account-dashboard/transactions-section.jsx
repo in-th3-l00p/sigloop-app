@@ -2,19 +2,16 @@ import { useQuery } from "convex/react"
 import { api } from "../../../convex/_generated/api"
 import { ArrowDownLeft, ArrowUpRight, ExternalLink } from "lucide-react"
 import { truncateAddress, formatDate, formatEth } from "@/lib/format"
+import { getExplorerTxUrl } from "@/lib/explorer"
+import { getTxStatusMeta } from "@/lib/tx-status"
 import { SendDialog } from "./send-dialog"
 import { ContactsDialog } from "./contacts-dialog"
-
-const ETHERSCAN_BASE = {
-  sepolia: "https://sepolia.etherscan.io",
-}
 
 export function TransactionsSection({ account }) {
   const transactions = useQuery(
     api.transactions.transactions.listByAccount,
     { accountId: account._id }
   )
-  const explorerBase = ETHERSCAN_BASE[account.chain] ?? "https://sepolia.etherscan.io"
 
   return (
     <div className="rounded-lg border border-border p-5 space-y-4">
@@ -51,11 +48,12 @@ export function TransactionsSection({ account }) {
           {transactions.map((tx) => {
             const isOutgoing = tx.direction === "out"
             const counterparty = isOutgoing ? tx.to : tx.from
+            const statusMeta = getTxStatusMeta(tx.status)
 
             return (
               <a
                 key={tx._id}
-                href={`${explorerBase}/tx/${tx.hash}`}
+                href={getExplorerTxUrl(account.chain, tx.hash)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-3 rounded-md px-3 py-2 hover:bg-accent/50 transition-colors group"
@@ -74,9 +72,7 @@ export function TransactionsSection({ account }) {
                     <p className="text-sm font-medium">
                       {isOutgoing ? "Sent" : "Received"}
                     </p>
-                    <span className={`inline-block h-1.5 w-1.5 rounded-full ${
-                      tx.status === "success" ? "bg-green-500" : "bg-red-500"
-                    }`} />
+                    <span className={`inline-block h-1.5 w-1.5 rounded-full ${statusMeta.dotClass}`} />
                   </div>
                   <p className="text-xs text-muted-foreground font-mono">
                     {counterparty ? truncateAddress(counterparty) : "Contract creation"}

@@ -5,6 +5,8 @@ import { ArrowUpRight, Loader2, BookUser } from "lucide-react"
 import { parseEther } from "viem"
 import { isValidAddress } from "@/lib/format"
 import { sendTransaction } from "@/lib/zerodev"
+import { TX_STATUS } from "@/lib/tx-status"
+import { finalizeProgressTransaction } from "@/lib/tx-finality"
 import { ContactsDialog } from "./contacts-dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -31,6 +33,7 @@ export function SendDialog({ account }) {
     open ? { id: account._id } : "skip"
   )
   const createTx = useMutation(api.transactions.transactions.create)
+  const updateTxStatus = useMutation(api.transactions.transactions.updateStatus)
 
   const canSubmit = isValidAddress(to) && Number(amount) > 0 && !isSending
 
@@ -47,16 +50,27 @@ export function SendDialog({ account }) {
         to,
         value,
       })
-      await createTx({
+      const txId = await createTx({
         accountId: account._id,
         hash: result.txHash,
         from: account.address,
         to,
         value: value.toString(),
         direction: "out",
-        status: "success",
+        status: TX_STATUS.PROGRESS,
         chain: account.chain,
       })
+
+      const finalStatus = await finalizeProgressTransaction({
+        chainSlug: account.chain,
+        privateKey: accountWithKey.privateKey,
+        txHash: result.txHash,
+      })
+      await updateTxStatus({
+        id: txId,
+        status: finalStatus,
+      })
+
       setTo("")
       setAmount("")
       setOpen(false)

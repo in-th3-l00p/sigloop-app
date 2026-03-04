@@ -16,6 +16,7 @@ import {
   Trash2,
   ArrowDownLeft,
   ArrowUpRight,
+  ExternalLink,
   Shield,
   Clock,
   X,
@@ -23,6 +24,8 @@ import {
   Bot,
 } from "lucide-react"
 import { truncateAddress, formatDate, formatEth, isValidAddress } from "@/lib/format"
+import { getExplorerTxUrl } from "@/lib/explorer"
+import { getTxStatusMeta } from "@/lib/tx-status"
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "@/components/ui/button"
@@ -126,7 +129,7 @@ export default function CardDashboardPage() {
         <PoliciesSection card={card} updateCard={updateCard} />
 
         {/* Transactions */}
-        <CardTransactionsSection transactions={transactions} />
+        <CardTransactionsSection transactions={transactions} chain={card.chain} />
 
         {/* Danger zone */}
         <DangerSection
@@ -554,7 +557,7 @@ function PoliciesSection({ card, updateCard }) {
   )
 }
 
-function CardTransactionsSection({ transactions }) {
+function CardTransactionsSection({ transactions, chain }) {
   return (
     <div className="rounded-lg border border-border p-5 space-y-4">
       <h2 className="text-sm font-medium text-muted-foreground">Transactions</h2>
@@ -584,10 +587,14 @@ function CardTransactionsSection({ transactions }) {
           {transactions.map((tx) => {
             const isOutgoing = tx.direction === "out"
             const counterparty = isOutgoing ? tx.to : tx.from
+            const statusMeta = getTxStatusMeta(tx.status)
             return (
-              <div
+              <a
                 key={tx._id}
-                className="flex items-center gap-3 rounded-md px-3 py-2 hover:bg-accent/50 transition-colors"
+                href={getExplorerTxUrl(chain, tx.hash)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group flex items-center gap-3 rounded-md px-3 py-2 hover:bg-accent/50 transition-colors"
               >
                 <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${
                   isOutgoing ? "bg-orange-500/10 text-orange-500" : "bg-green-500/10 text-green-500"
@@ -599,9 +606,12 @@ function CardTransactionsSection({ transactions }) {
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium">
-                    {isOutgoing ? "Sent" : "Received"}
-                  </p>
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-sm font-medium">
+                      {isOutgoing ? "Sent" : "Received"}
+                    </p>
+                    <span className={`inline-block h-1.5 w-1.5 rounded-full ${statusMeta.dotClass}`} />
+                  </div>
                   <p className="text-xs text-muted-foreground font-mono">
                     {counterparty ? truncateAddress(counterparty) : "Contract"}
                   </p>
@@ -612,7 +622,8 @@ function CardTransactionsSection({ transactions }) {
                   </p>
                   <p className="text-xs text-muted-foreground">{formatDate(tx.createdAt)}</p>
                 </div>
-              </div>
+                <ExternalLink className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+              </a>
             )
           })}
         </div>

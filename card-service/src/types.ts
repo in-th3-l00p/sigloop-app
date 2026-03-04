@@ -1,4 +1,5 @@
 export type PolicyType = "allowedContract" | "maxPerTx" | "allowedRecipient"
+export type TxStatus = "progress" | "success" | "error"
 
 export interface CardPolicy {
   type: PolicyType
@@ -39,7 +40,7 @@ export interface CardTransaction {
   to: string
   value: string
   direction: string
-  status: string
+  status: TxStatus
   chain: string
   createdAt: number
 }
@@ -59,10 +60,11 @@ export interface CardStore {
     to: string
     value: string
     direction: string
-    status: string
+    status: TxStatus
     chain: string
     description?: string
   }): Promise<{ txId: string }>
+  setCardTransactionStatus(secret: string, hash: string, status: TxStatus): Promise<void>
   setCardStatus(secret: string, status: "active" | "paused"): Promise<{ status: "active" | "paused" }>
 }
 
@@ -73,5 +75,11 @@ export interface ChainGateway {
     privateKey: string
     to: string
     value: string
-  }): Promise<{ hash: string; status: "pending" | "confirmed" }>
+  }): Promise<{ hash: string; status: "progress" | "success" }>
+  waitForFinalStatus(params: {
+    chainSlug: string
+    privateKey: string
+    hash: string
+    timeoutMs?: number
+  }): Promise<{ status: "success" | "error"; finalHash?: string }>
 }

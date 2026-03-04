@@ -68,6 +68,10 @@ Request body:
 ```
 
 Returns `201`.
+Status lifecycle:
+- `progress`: intermediary state while waiting for chain receipt within retry window.
+- `success`: final success state.
+- `error`: final failed/timeout state.
 
 11. `POST /v1/card/pause`
 Set card status to `paused` in Convex.

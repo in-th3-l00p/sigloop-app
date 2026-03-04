@@ -1,4 +1,4 @@
-import { createPublicClient, http, type Address } from "viem"
+import { createPublicClient, http, type Address, type Hex } from "viem"
 import { privateKeyToAccount } from "viem/accounts"
 import { entryPoint07Address } from "viem/account-abstraction"
 import { signerToEcdsaValidator } from "@zerodev/ecdsa-validator"
@@ -15,27 +15,13 @@ const ENTRY_POINT = {
 const KERNEL_VERSION = "0.3.1" as const
 
 export class ZeroDevChainGateway implements ChainGateway {
-  async getBalance(chainSlug: string, address: string): Promise<string> {
+  private async buildKernelClient(chainSlug: string, privateKey: string) {
     const { chain, rpcUrl } = getChainConfig(chainSlug)
-    const client = createPublicClient({ chain, transport: http(rpcUrl) })
-    const balance = await client.getBalance({ address: address as Address })
-    return balance.toString()
-  }
-
-  async sendTransaction(params: {
-    chainSlug: string
-    privateKey: string
-    to: string
-    value: string
-  }): Promise<{ hash: string; status: "pending" | "confirmed" }> {
-    const { chain, rpcUrl } = getChainConfig(params.chainSlug)
-    const signer = privateKeyToAccount(params.privateKey as Address)
-
+    const signer = privateKeyToAccount(privateKey as Address)
     const publicClient = createPublicClient({
       chain,
       transport: http(rpcUrl),
     })
-
     const ecdsaValidator = await signerToEcdsaValidator(publicClient, {
       signer,
       entryPoint: ENTRY_POINT,
@@ -54,6 +40,27 @@ export class ZeroDevChainGateway implements ChainGateway {
       bundlerTransport: http(rpcUrl),
     })
 
+    return { account, kernelClient }
+  }
+
+  async getBalance(chainSlug: string, address: string): Promise<string> {
+    const { chain, rpcUrl } = getChainConfig(chainSlug)
+    const client = createPublicClient({ chain, transport: http(rpcUrl) })
+    const balance = await client.getBalance({ address: address as Address })
+    return balance.toString()
+  }
+
+  async sendTransaction(params: {
+    chainSlug: string
+    privateKey: string
+    to: string
+    value: string
+  }): Promise<{ hash: string; status: "progress" | "success" }> {
+    const { account, kernelClient } = await this.buildKernelClient(
+      params.chainSlug,
+      params.privateKey,
+    )
+
     try {
       const userOpHash = await kernelClient.sendUserOperation({
         callData: await account.encodeCalls([
@@ -68,12 +75,38 @@ export class ZeroDevChainGateway implements ChainGateway {
       try {
         const receipt = await kernelClient.waitForUserOperationReceipt({ hash: userOpHash })
         const txHash = receipt.receipt.transactionHash || userOpHash
-        return { hash: txHash, status: "confirmed" }
+        return { hash: txHash, status: "success" }
       } catch {
-        return { hash: userOpHash, status: "pending" }
+        return { hash: userOpHash, status: "progress" }
       }
     } catch (error) {
       throw new ApiError(502, "CHAIN_SEND_FAILED", error instanceof Error ? error.message : "Failed to send user operation")
+    }
+  }
+
+  async waitForFinalStatus(params: {
+    chainSlug: string
+    privateKey: string
+    hash: string
+    timeoutMs?: number
+  }): Promise<{ status: "success" | "error"; finalHash?: string }> {
+    try {
+      const { kernelClient } = await this.buildKernelClient(params.chainSlug, params.privateKey)
+      const timeoutMs = params.timeoutMs ?? 120000
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("Timeout waiting for user operation receipt")), timeoutMs),
+      )
+
+      const receipt = await Promise.race([
+        kernelClient.waitForUserOperationReceipt({ hash: params.hash as Hex }),
+        timeoutPromise,
+      ])
+
+      const txHash = receipt.receipt.transactionHash || undefined
+      const ok = receipt.receipt.status === "success"
+      return { status: ok ? "success" : "error", finalHash: txHash }
+    } catch {
+      return { status: "error" }
     }
   }
 }

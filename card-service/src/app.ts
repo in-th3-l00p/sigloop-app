@@ -5,6 +5,7 @@ import type { CardStore, ChainGateway } from "./types.js"
 import { cardAuth } from "./lib/auth.js"
 import { ApiError, toErrorResponse } from "./lib/errors.js"
 import { enforceCardIsUsable, enforceLimitsAndPolicies } from "./lib/policies.js"
+import { trackProgressTransaction } from "./lib/tx-tracker.js"
 
 const transferSchema = z.object({
   to: z.string().regex(/^0x[a-fA-F0-9]{40}$/, "Invalid EVM address"),
@@ -152,6 +153,19 @@ export function createApp(store: CardStore, chainGateway: ChainGateway) {
     }
 
     await store.saveTransactionBySecret(secret, tx)
+
+    if (sent.status === "progress") {
+      const retryWindowMs = Number(process.env.TX_RETRY_WINDOW_MS ?? 120000)
+      void trackProgressTransaction({
+        store,
+        chainGateway,
+        secret,
+        hash: sent.hash,
+        chainSlug: runtime.account.chain,
+        privateKey: runtime.account.privateKey,
+        timeoutMs: retryWindowMs,
+      })
+    }
 
     return c.json({ transaction: tx }, 201)
   })

@@ -34,6 +34,7 @@ function buildStore(): CardStore {
     async saveTransactionBySecret() {
       return { txId: "tx_1" }
     },
+    async setCardTransactionStatus() {},
     async setCardStatus(_secret, status) {
       return { status }
     },
@@ -46,7 +47,10 @@ function buildGateway(): ChainGateway {
       return "2000"
     },
     async sendTransaction() {
-      return { hash: "0xabc", status: "confirmed" }
+      return { hash: "0xabc", status: "success" }
+    },
+    async waitForFinalStatus() {
+      return { status: "success" }
     },
   }
 }

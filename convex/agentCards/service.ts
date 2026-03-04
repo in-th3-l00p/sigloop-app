@@ -140,7 +140,7 @@ export const upsertCardTransactionBySecret = mutation({
     to: v.string(),
     value: v.string(),
     direction: v.string(),
-    status: v.string(),
+    status: v.union(v.literal("progress"), v.literal("success"), v.literal("error")),
     chain: v.string(),
     description: v.optional(v.string()),
   },
@@ -216,6 +216,47 @@ export const upsertCardTransactionBySecret = mutation({
       txId,
       description: args.description,
     }
+  },
+})
+
+export const setCardTransactionStatusBySecret = mutation({
+  args: {
+    secret: v.string(),
+    hash: v.string(),
+    status: v.union(v.literal("progress"), v.literal("success"), v.literal("error")),
+  },
+  handler: async (ctx, args) => {
+    const card = await ctx.db
+      .query("agentCards")
+      .withIndex("by_secret", (q) => q.eq("secret", args.secret))
+      .first()
+    if (!card) {
+      throw new Error("Card not found")
+    }
+
+    const txs = await ctx.db
+      .query("transactions")
+      .withIndex("by_card", (q) => q.eq("agentCardId", card._id))
+      .collect()
+
+    const tx = txs.find((item) => item.hash === args.hash)
+    if (!tx) {
+      throw new Error("Transaction not found")
+    }
+    if (tx.status === "success" || tx.status === "error") {
+      return tx
+    }
+
+    await ctx.db.patch(tx._id, { status: args.status })
+
+    if (args.status === "error") {
+      const nextSpent = BigInt(card.spent || "0") - BigInt(tx.value || "0")
+      await ctx.db.patch(card._id, {
+        spent: (nextSpent > 0n ? nextSpent : 0n).toString(),
+      })
+    }
+
+    return { ...tx, status: args.status }
   },
 })
 

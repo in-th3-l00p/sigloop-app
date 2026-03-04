@@ -3,6 +3,7 @@ import type {
   CardRuntimeContext,
   CardStore,
   CardTransaction,
+  TxStatus,
 } from "../types.js"
 import { ApiError } from "../lib/errors.js"
 
@@ -36,7 +37,7 @@ interface ConvexTx {
   to: string
   value: string
   direction: string
-  status: string
+  status: TxStatus
   chain: string
   createdAt: number
 }
@@ -103,7 +104,7 @@ export class ConvexCardStore implements CardStore {
     to: string
     value: string
     direction: string
-    status: string
+    status: TxStatus
     chain: string
     description?: string
   }): Promise<{ txId: string }> {
@@ -117,6 +118,14 @@ export class ConvexCardStore implements CardStore {
     } catch (error) {
       throw new ApiError(400, "CONVEX_TX_RECORD_FAILED", error instanceof Error ? error.message : "Failed to record transaction")
     }
+  }
+
+  async setCardTransactionStatus(secret: string, hash: string, status: TxStatus): Promise<void> {
+    await this.client.mutation("agentCards/service:setCardTransactionStatusBySecret" as any, {
+      secret,
+      hash,
+      status,
+    })
   }
 
   async setCardStatus(secret: string, status: "active" | "paused"): Promise<{ status: "active" | "paused" }> {
