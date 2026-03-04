@@ -28,13 +28,6 @@ export function TokensTab({ account }) {
           </p>
         </div>
       </div>
-
-      <Separator />
-
-      {/* ERC-20 empty state */}
-      <p className="text-xs text-muted-foreground text-center py-4">
-        No other tokens found on Sepolia
-      </p>
     </div>
   )
 }

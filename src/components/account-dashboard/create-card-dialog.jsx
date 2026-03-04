@@ -134,7 +134,6 @@ export function CreateCardDialog({ accountId, open, onOpenChange }) {
             </div>
           </div>
 
-          {/* Reset period — only relevant with a limit */}
           {limit && Number(limit) > 0 && (
             <div className="space-y-2">
               <Label>Limit Reset Period</Label>
@@ -163,7 +162,6 @@ export function CreateCardDialog({ accountId, open, onOpenChange }) {
             </div>
           )}
 
-          {/* Max per tx */}
           <div className="space-y-2">
             <Label htmlFor="card-max-tx">Max Per Transaction</Label>
             <div className="relative">
@@ -184,7 +182,6 @@ export function CreateCardDialog({ accountId, open, onOpenChange }) {
             </div>
           </div>
 
-          {/* Allowed contracts */}
           <div className="space-y-2">
             <Label>Allowed Contracts</Label>
             {allowedContracts.length > 0 && (

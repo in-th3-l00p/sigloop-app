@@ -57,7 +57,6 @@ function AccountDrawerContent() {
       </DrawerHeader>
 
       <div className="px-4 pb-4 space-y-4">
-        {/* User ID */}
         <div className="flex items-center gap-3 rounded-lg border border-border bg-muted/50 p-3">
           <User className="h-4 w-4 text-muted-foreground" />
           <div className="min-w-0">
@@ -68,7 +67,6 @@ function AccountDrawerContent() {
 
         <Separator />
 
-        {/* Email accounts */}
         <div>
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-sm font-medium">Email</h3>
@@ -101,7 +99,6 @@ function AccountDrawerContent() {
 
         <Separator />
 
-        {/* Wallet accounts */}
         <div>
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-sm font-medium">Wallets</h3>

@@ -67,16 +67,9 @@ export default function AccountDashboardPage() {
           </div>
         </div>
 
-        {/* General Info */}
         <GeneralInfoSection account={account} />
-
-        {/* Transactions */}
         <TransactionsSection account={account} />
-
-        {/* Agent Cards */}
         <AgentCardsSection account={account} />
-
-        {/* DeFi */}
         <DefiSection account={account} />
       </div>
     </div>

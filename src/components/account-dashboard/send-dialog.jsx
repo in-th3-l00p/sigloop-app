@@ -107,6 +107,7 @@ export function SendDialog({ account }) {
               />
               <ContactsDialog
                 onSelect={handleContactSelect}
+                hideAddForm
                 trigger={
                   <Button variant="outline" size="icon" className="cursor-pointer shrink-0">
                     <BookUser className="h-4 w-4" />

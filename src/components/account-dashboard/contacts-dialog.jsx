@@ -14,7 +14,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 
-export function ContactsDialog({ onSelect, trigger }) {
+export function ContactsDialog({ onSelect, hideAddForm, trigger }) {
   const [open, setOpen] = useState(false)
   const [name, setName] = useState("")
   const [address, setAddress] = useState("")
@@ -63,35 +63,35 @@ export function ContactsDialog({ onSelect, trigger }) {
           </DialogDescription>
         </DialogHeader>
 
-        {/* Add contact form */}
-        <div className="flex gap-2">
-          <Input
-            placeholder="Name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="flex-1"
-          />
-          <Input
-            placeholder="0x address"
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-            className="flex-1 font-mono text-xs"
-          />
-          <Button
-            size="icon"
-            onClick={handleAdd}
-            disabled={!canAdd}
-            className="cursor-pointer shrink-0"
-          >
-            {isAdding ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Plus className="h-4 w-4" />
-            )}
-          </Button>
-        </div>
+        {!hideAddForm && (
+          <div className="flex gap-2">
+            <Input
+              placeholder="Name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="flex-1"
+            />
+            <Input
+              placeholder="0x address"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              className="flex-1 font-mono text-xs"
+            />
+            <Button
+              size="icon"
+              onClick={handleAdd}
+              disabled={!canAdd}
+              className="cursor-pointer shrink-0"
+            >
+              {isAdding ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Plus className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
+        )}
 
-        {/* Contact list */}
         <div className="space-y-1 max-h-64 overflow-y-auto">
           {contacts.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-4">
