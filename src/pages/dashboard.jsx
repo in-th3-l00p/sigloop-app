@@ -83,7 +83,6 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen p-8">
       <div className="mx-auto max-w-4xl space-y-6">
-        {/* Header */}
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">Dashboard</h1>
           <div className="flex items-center gap-4">
@@ -97,10 +96,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Account Section */}
         <AccountSection />
-
-        {/* Smart Accounts Section */}
         <SmartAccountsSection accounts={accounts} />
       </div>
     </div>

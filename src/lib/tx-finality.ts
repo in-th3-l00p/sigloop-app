@@ -5,7 +5,12 @@ export async function finalizeProgressTransaction({
   privateKey,
   txHash,
   retryWindowMs = 120000,
-}) {
+}: {
+  chainSlug: string
+  privateKey: `0x${string}`
+  txHash: `0x${string}`
+  retryWindowMs?: number
+}): Promise<"success" | "error"> {
   return waitForUserOpFinality({
     chainSlug,
     privateKey,

@@ -1,12 +1,12 @@
-export function truncateAddress(addr, start = 6, end = 4) {
+export function truncateAddress(addr: string | undefined | null, start = 6, end = 4) {
   if (!addr) return ""
   return `${addr.slice(0, start)}...${addr.slice(-end)}`
 }
 
-export function formatDate(timestamp) {
+export function formatDate(timestamp: number) {
   const date = new Date(timestamp)
   const now = new Date()
-  const diffMs = now - date
+  const diffMs = now.getTime() - date.getTime()
   const diffSecs = Math.floor(diffMs / 1000)
   const diffMins = Math.floor(diffSecs / 60)
   const diffHours = Math.floor(diffMins / 60)
@@ -24,7 +24,7 @@ export function formatDate(timestamp) {
   })
 }
 
-export function formatEth(weiBigInt) {
+export function formatEth(weiBigInt: bigint | string | number | undefined | null) {
   if (weiBigInt === undefined || weiBigInt === null) return "0"
   const wei = BigInt(weiBigInt)
   const whole = wei / BigInt(1e18)
@@ -33,6 +33,6 @@ export function formatEth(weiBigInt) {
   return decimals ? `${whole}.${decimals}` : whole.toString()
 }
 
-export function isValidAddress(addr) {
+export function isValidAddress(addr: unknown): addr is `0x${string}` {
   return typeof addr === "string" && /^0x[0-9a-fA-F]{40}$/.test(addr)
 }
