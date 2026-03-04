@@ -91,4 +91,30 @@ export default defineSchema({
     .index("by_type", ["type"])
     .index("by_platform", ["platform"])
     .index("by_card_preset", ["cardId", "presetId"]),
+
+  apiKeys: defineTable({
+    userId: v.string(),
+    name: v.string(),
+    keyHash: v.string(),
+    keyPrefix: v.string(),
+    status: v.union(v.literal("active"), v.literal("revoked")),
+    lastUsedAt: v.optional(v.float64()),
+    createdAt: v.float64(),
+    revokedAt: v.optional(v.float64()),
+  })
+    .index("by_user", ["userId"])
+    .index("by_hash", ["keyHash"]),
+
+  apiRequestLogs: defineTable({
+    userId: v.string(),
+    apiKeyId: v.id("apiKeys"),
+    method: v.string(),
+    path: v.string(),
+    statusCode: v.float64(),
+    durationMs: v.float64(),
+    requestId: v.string(),
+    createdAt: v.float64(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_key", ["apiKeyId"]),
 })

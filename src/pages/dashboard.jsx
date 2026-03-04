@@ -2,6 +2,7 @@ import { usePrivy } from "@privy-io/react-auth"
 import { useConvexAuth, useQuery } from "convex/react"
 import { api } from "../../convex/_generated/api"
 import { Navigate } from "react-router-dom"
+import { Link } from "react-router-dom"
 import { Settings, Mail, Wallet } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { AccountDrawer } from "@/components/account-drawer"
@@ -52,12 +53,19 @@ function AccountSection() {
           </div>
         </div>
 
-        <AccountDrawer>
-          <Button variant="outline" size="sm" className="cursor-pointer gap-1.5">
-            <Settings className="h-3.5 w-3.5" />
-            Manage
-          </Button>
-        </AccountDrawer>
+        <div className="flex items-center gap-2">
+          <Link to="/app/api">
+            <Button variant="outline" size="sm" className="cursor-pointer">
+              API
+            </Button>
+          </Link>
+          <AccountDrawer>
+            <Button variant="outline" size="sm" className="cursor-pointer gap-1.5">
+              <Settings className="h-3.5 w-3.5" />
+              Manage
+            </Button>
+          </AccountDrawer>
+        </div>
       </div>
     </div>
   )

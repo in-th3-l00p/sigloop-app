@@ -4,6 +4,7 @@ import LoginPage from "@/pages/login"
 import DashboardPage from "@/pages/dashboard"
 import AccountDashboardPage from "@/pages/account-dashboard"
 import CardDashboardPage from "@/pages/card-dashboard"
+import ApiDashboardPage from "@/pages/api-dashboard"
 
 function App() {
   const { ready } = usePrivy()
@@ -16,6 +17,7 @@ function App() {
     <Routes>
       <Route path="/app" element={<LoginPage />} />
       <Route path="/app/dashboard" element={<DashboardPage />} />
+      <Route path="/app/api" element={<ApiDashboardPage />} />
       <Route path="/app/dashboard/:accountId" element={<AccountDashboardPage />} />
       <Route path="/app/dashboard/:accountId/card/:cardId" element={<CardDashboardPage />} />
       <Route path="*" element={<Navigate to="/app" replace />} />

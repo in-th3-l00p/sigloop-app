@@ -1,0 +1,27 @@
+{
+  "name": "sigloop-api-service",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/index.js",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.14.0",
+    "@hono/zod-validator": "^0.7.2",
+    "@zerodev/ecdsa-validator": "^5.4.9",
+    "@zerodev/sdk": "^5.5.7",
+    "convex": "^1.32.0",
+    "hono": "^4.6.12",
+    "viem": "^2.46.3",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.5.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
+  }
+}
