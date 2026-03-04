@@ -7,6 +7,7 @@ import { Activity, ArrowLeft, Copy, KeyRound, Pencil, Plus, Trash2 } from "lucid
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard"
 import {
   Dialog,
@@ -155,19 +156,36 @@ function ApiKeyDialog({
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-3">
-          <Input value={name} onChange={(event) => setName(event.target.value)} placeholder="Key name" />
-          <ScopeSelector value={scopes} onChange={setScopes} />
-          <Input
-            value={rateLimitPerMinute}
-            onChange={(event) => setRateLimitPerMinute(event.target.value)}
-            placeholder="Rate limit per minute"
-          />
-          <Input
-            value={ipAllowlistRaw}
-            onChange={(event) => setIpAllowlistRaw(event.target.value)}
-            placeholder="IP allowlist (comma separated)"
-          />
+        <div className="space-y-4 py-2">
+          <div className="space-y-2">
+            <Label htmlFor="api-key-name">Key Name</Label>
+            <Input id="api-key-name" value={name} onChange={(event) => setName(event.target.value)} placeholder="Key name" />
+          </div>
+          <div className="space-y-2">
+            <Label>Scopes</Label>
+            <ScopeSelector value={scopes} onChange={setScopes} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="api-key-rate-limit">Rate Limit Per Minute</Label>
+            <Input
+              id="api-key-rate-limit"
+              value={rateLimitPerMinute}
+              onChange={(event) => setRateLimitPerMinute(event.target.value)}
+              placeholder="Rate limit per minute"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="api-key-ip-allowlist">IP Allowlist</Label>
+            <Input
+              id="api-key-ip-allowlist"
+              value={ipAllowlistRaw}
+              onChange={(event) => setIpAllowlistRaw(event.target.value)}
+              placeholder="IP allowlist (comma separated)"
+            />
+            <p className="text-xs text-muted-foreground">
+              Leave empty to allow requests from any IP with this key.
+            </p>
+          </div>
         </div>
 
         <DialogFooter>
@@ -280,10 +298,22 @@ export default function ApiDashboardPage() {
         <section className="rounded-lg border border-border p-5 space-y-4">
           <h2 className="text-sm font-medium text-muted-foreground">API Logs</h2>
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
-            <Input placeholder="Method" value={methodFilter} onChange={(event) => { setMethodFilter(event.target.value); setCursor(0); setCursorHistory([]) }} />
-            <Input placeholder="Path contains" value={pathFilter} onChange={(event) => { setPathFilter(event.target.value); setCursor(0); setCursorHistory([]) }} />
-            <Input placeholder="Status min" value={statusMin} onChange={(event) => { setStatusMin(event.target.value); setCursor(0); setCursorHistory([]) }} />
-            <Input placeholder="Status max" value={statusMax} onChange={(event) => { setStatusMax(event.target.value); setCursor(0); setCursorHistory([]) }} />
+            <div className="space-y-2">
+              <Label htmlFor="log-method">Method</Label>
+              <Input id="log-method" placeholder="GET/POST..." value={methodFilter} onChange={(event) => { setMethodFilter(event.target.value); setCursor(0); setCursorHistory([]) }} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="log-path">Path Contains</Label>
+              <Input id="log-path" placeholder="/v1/accounts" value={pathFilter} onChange={(event) => { setPathFilter(event.target.value); setCursor(0); setCursorHistory([]) }} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="log-status-min">Status Min</Label>
+              <Input id="log-status-min" placeholder="200" value={statusMin} onChange={(event) => { setStatusMin(event.target.value); setCursor(0); setCursorHistory([]) }} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="log-status-max">Status Max</Label>
+              <Input id="log-status-max" placeholder="599" value={statusMax} onChange={(event) => { setStatusMax(event.target.value); setCursor(0); setCursorHistory([]) }} />
+            </div>
           </div>
 
           {logsResult === undefined ? (
