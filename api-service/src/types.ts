@@ -1,12 +1,26 @@
+export type ApiScope = "read" | "write" | "tx" | "admin"
+
 export interface ApiKeyContext {
   apiKeyId: string
   userId: string
   keyName: string
   keyPrefix: string
+  scopes: string[]
+  ipAllowlist: string[]
+  rateLimitPerMinute: number
+}
+
+export interface ApiAuthorizationFailure {
+  ok: false
+  reason: "INSUFFICIENT_SCOPE" | "IP_NOT_ALLOWED" | "RATE_LIMITED"
+}
+
+export interface ApiAuthorizationSuccess extends ApiKeyContext {
+  ok: true
 }
 
 export interface ApiStore {
-  authenticateApiKey(apiKey: string): Promise<ApiKeyContext | null>
+  authorizeApiRequest(apiKey: string, requiredScope: ApiScope, ipAddress?: string): Promise<ApiAuthorizationSuccess | ApiAuthorizationFailure | null>
   logRequest(params: {
     apiKey: string
     method: string
@@ -14,7 +28,23 @@ export interface ApiStore {
     statusCode: number
     durationMs: number
     requestId: string
+    ipAddress?: string
   }): Promise<void>
+
+  listApiKeys(userId: string): Promise<unknown[]>
+  createApiKey(userId: string, input: {
+    name: string
+    scopes?: string[]
+    ipAllowlist?: string[]
+    rateLimitPerMinute?: number
+  }): Promise<unknown>
+  updateApiKeyPolicy(userId: string, apiKeyId: string, input: {
+    name?: string
+    scopes?: string[]
+    ipAllowlist?: string[]
+    rateLimitPerMinute?: number
+  }): Promise<unknown>
+  revokeApiKey(userId: string, apiKeyId: string): Promise<{ ok: boolean }>
 
   listAccounts(userId: string): Promise<unknown[]>
   getAccount(userId: string, accountId: string): Promise<unknown>
@@ -41,6 +71,7 @@ export interface ApiStore {
   listTransactionsByAccount(userId: string, accountId: string): Promise<unknown[]>
   createTransaction(userId: string, input: {
     accountId: string
+    idempotencyKey: string
     hash: string
     from: string
     to: string

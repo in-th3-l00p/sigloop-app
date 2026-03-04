@@ -16,6 +16,15 @@ Default port: `8788`.
 
 Use `x-api-key` header on all `/v1/*` routes.
 
+## Key Policies
+
+API keys support:
+- `scopes`: `read`, `write`, `tx`, `admin` (`admin` implies all)
+- `ipAllowlist`: optional source IP allowlist
+- `rateLimitPerMinute`: optional per-key request cap
+
+`POST /v1/accounts/:accountId/transactions` also requires `idempotency-key`.
+
 ## Docs
 
 - `GET /openapi.json`

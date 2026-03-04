@@ -1,5 +1,5 @@
 import { ConvexHttpClient } from "convex/browser"
-import type { ApiStore, ApiKeyContext } from "../types.js"
+import type { ApiStore, ApiAuthorizationFailure, ApiAuthorizationSuccess, ApiScope } from "../types.js"
 
 export class ConvexApiStore implements ApiStore {
   private client: ConvexHttpClient
@@ -8,10 +8,12 @@ export class ConvexApiStore implements ApiStore {
     this.client = new ConvexHttpClient(url)
   }
 
-  async authenticateApiKey(apiKey: string): Promise<ApiKeyContext | null> {
-    return this.client.mutation("apiService/service:authenticateApiKey" as any, {
+  async authorizeApiRequest(apiKey: string, requiredScope: ApiScope, ipAddress?: string): Promise<ApiAuthorizationSuccess | ApiAuthorizationFailure | null> {
+    return this.client.mutation("apiService/service:authorizeApiRequest" as any, {
       apiKey,
-    }) as Promise<ApiKeyContext | null>
+      requiredScope,
+      ipAddress,
+    }) as Promise<ApiAuthorizationSuccess | ApiAuthorizationFailure | null>
   }
 
   async logRequest(params: {
@@ -21,8 +23,42 @@ export class ConvexApiStore implements ApiStore {
     statusCode: number
     durationMs: number
     requestId: string
+    ipAddress?: string
   }): Promise<void> {
     await this.client.mutation("apiService/service:logApiRequest" as any, params)
+  }
+
+  async listApiKeys(userId: string): Promise<unknown[]> {
+    return this.client.query("apiService/service:listApiKeys" as any, { userId }) as Promise<unknown[]>
+  }
+
+  async createApiKey(userId: string, input: {
+    name: string
+    scopes?: string[]
+    ipAllowlist?: string[]
+    rateLimitPerMinute?: number
+  }): Promise<unknown> {
+    return this.client.mutation("apiService/service:createApiKey" as any, {
+      userId,
+      ...input,
+    }) as Promise<unknown>
+  }
+
+  async updateApiKeyPolicy(userId: string, apiKeyId: string, input: {
+    name?: string
+    scopes?: string[]
+    ipAllowlist?: string[]
+    rateLimitPerMinute?: number
+  }): Promise<unknown> {
+    return this.client.mutation("apiService/service:updateApiKeyPolicy" as any, {
+      userId,
+      apiKeyId,
+      ...input,
+    }) as Promise<unknown>
+  }
+
+  async revokeApiKey(userId: string, apiKeyId: string): Promise<{ ok: boolean }> {
+    return this.client.mutation("apiService/service:revokeApiKey" as any, { userId, apiKeyId }) as Promise<{ ok: boolean }>
   }
 
   async listAccounts(userId: string): Promise<unknown[]> {
@@ -94,6 +130,7 @@ export class ConvexApiStore implements ApiStore {
 
   async createTransaction(userId: string, input: {
     accountId: string
+    idempotencyKey: string
     hash: string
     from: string
     to: string

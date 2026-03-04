@@ -3,20 +3,20 @@ import { Link, Navigate } from "react-router-dom"
 import { usePrivy } from "@privy-io/react-auth"
 import { useConvexAuth, useMutation, useQuery } from "convex/react"
 import { api } from "../../convex/_generated/api"
-import { ArrowLeft, Copy, KeyRound, Trash2, Activity } from "lucide-react"
+import { ArrowLeft, Copy, KeyRound, Trash2, Activity, Save } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard"
+
+const ALL_SCOPES = ["read", "write", "tx", "admin"]
 
 function formatDate(value) {
   return new Date(value).toLocaleString("en-US")
 }
 
 function UsageBars({ points = [] }) {
-  const max = useMemo(() => {
-    return points.reduce((acc, item) => Math.max(acc, item.total), 1)
-  }, [points])
+  const max = useMemo(() => points.reduce((acc, item) => Math.max(acc, item.total), 1), [points])
 
   if (points.length === 0) {
     return <p className="text-sm text-muted-foreground">No API traffic yet.</p>
@@ -42,18 +42,66 @@ function UsageBars({ points = [] }) {
   )
 }
 
+function ScopeSelector({ value, onChange }) {
+  const scopes = value ?? []
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {ALL_SCOPES.map((scope) => (
+        <button
+          key={scope}
+          type="button"
+          onClick={() => {
+            const next = scopes.includes(scope)
+              ? scopes.filter((item) => item !== scope)
+              : [...scopes, scope]
+            onChange(next)
+          }}
+          className={`cursor-pointer rounded-md border px-2 py-1 text-xs ${
+            scopes.includes(scope)
+              ? "border-primary bg-primary/10 text-primary"
+              : "border-border text-muted-foreground"
+          }`}
+        >
+          {scope}
+        </button>
+      ))}
+    </div>
+  )
+}
+
 export default function ApiDashboardPage() {
   const { logout } = usePrivy()
   const { isLoading: authLoading, isAuthenticated } = useConvexAuth()
+
+  const [cursor, setCursor] = useState(0)
+  const [cursorHistory, setCursorHistory] = useState([])
+  const [methodFilter, setMethodFilter] = useState("")
+  const [pathFilter, setPathFilter] = useState("")
+  const [statusMin, setStatusMin] = useState("")
+  const [statusMax, setStatusMax] = useState("")
+
   const usage = useQuery(api.apiRequestLogs.apiRequestLogs.usage, { days: 7 })
-  const logs = useQuery(api.apiRequestLogs.apiRequestLogs.list, { limit: 100 })
+  const logsResult = useQuery(api.apiRequestLogs.apiRequestLogs.list, {
+    limit: 25,
+    cursor,
+    method: methodFilter || undefined,
+    pathContains: pathFilter || undefined,
+    statusMin: statusMin ? Number(statusMin) : undefined,
+    statusMax: statusMax ? Number(statusMax) : undefined,
+  })
+
   const keys = useQuery(api.apiKeys.apiKeys.list)
   const createKey = useMutation(api.apiKeys.apiKeys.create)
   const revokeKey = useMutation(api.apiKeys.apiKeys.revoke)
+  const updateKeyPolicy = useMutation(api.apiKeys.apiKeys.updatePolicy)
 
   const [newKeyName, setNewKeyName] = useState("")
+  const [newKeyScopes, setNewKeyScopes] = useState(["read", "write", "tx"])
+  const [newRateLimit, setNewRateLimit] = useState("120")
+  const [newIpAllowlist, setNewIpAllowlist] = useState("")
   const [lastCreated, setLastCreated] = useState(null)
   const [copied, copy] = useCopyToClipboard()
+  const [draftPolicies, setDraftPolicies] = useState({})
 
   if (authLoading) {
     return (
@@ -69,10 +117,32 @@ export default function ApiDashboardPage() {
 
   const onCreateKey = async () => {
     if (!newKeyName.trim()) return
-    const created = await createKey({ name: newKeyName.trim() })
+    const created = await createKey({
+      name: newKeyName.trim(),
+      scopes: newKeyScopes,
+      rateLimitPerMinute: Number(newRateLimit) || undefined,
+      ipAllowlist: newIpAllowlist
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean),
+    })
     setLastCreated(created)
     setNewKeyName("")
   }
+
+  const onSavePolicy = async (key) => {
+    const draft = draftPolicies[key._id]
+    if (!draft) return
+    await updateKeyPolicy({
+      id: key._id,
+      scopes: draft.scopes,
+      rateLimitPerMinute: draft.rateLimitPerMinute,
+      ipAllowlist: draft.ipAllowlist,
+      name: draft.name,
+    })
+  }
+
+  const logs = logsResult?.items ?? []
 
   return (
     <div className="min-h-screen p-8">
@@ -127,35 +197,77 @@ export default function ApiDashboardPage() {
 
         <section className="rounded-lg border border-border p-5 space-y-4">
           <h2 className="text-sm font-medium text-muted-foreground">API Logs</h2>
-          {logs === undefined ? (
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
+            <Input placeholder="Method" value={methodFilter} onChange={(event) => { setMethodFilter(event.target.value); setCursor(0); setCursorHistory([]) }} />
+            <Input placeholder="Path contains" value={pathFilter} onChange={(event) => { setPathFilter(event.target.value); setCursor(0); setCursorHistory([]) }} />
+            <Input placeholder="Status min" value={statusMin} onChange={(event) => { setStatusMin(event.target.value); setCursor(0); setCursorHistory([]) }} />
+            <Input placeholder="Status max" value={statusMax} onChange={(event) => { setStatusMax(event.target.value); setCursor(0); setCursorHistory([]) }} />
+          </div>
+
+          {logsResult === undefined ? (
             <p className="text-sm text-muted-foreground">Loading logs...</p>
           ) : logs.length === 0 ? (
             <p className="text-sm text-muted-foreground">No requests logged yet.</p>
           ) : (
-            <div className="max-h-80 overflow-y-auto rounded-md border border-border">
-              <table className="w-full text-sm">
-                <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
-                  <tr>
-                    <th className="px-3 py-2">Time</th>
-                    <th className="px-3 py-2">Method</th>
-                    <th className="px-3 py-2">Path</th>
-                    <th className="px-3 py-2">Status</th>
-                    <th className="px-3 py-2">Duration</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {logs.map((row) => (
-                    <tr key={row._id} className="border-t border-border">
-                      <td className="px-3 py-2">{formatDate(row.createdAt)}</td>
-                      <td className="px-3 py-2 font-mono">{row.method}</td>
-                      <td className="px-3 py-2 font-mono text-xs">{row.path}</td>
-                      <td className="px-3 py-2">{row.statusCode}</td>
-                      <td className="px-3 py-2">{row.durationMs}ms</td>
+            <>
+              <div className="max-h-80 overflow-y-auto rounded-md border border-border">
+                <table className="w-full text-sm">
+                  <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
+                    <tr>
+                      <th className="px-3 py-2">Time</th>
+                      <th className="px-3 py-2">Method</th>
+                      <th className="px-3 py-2">Path</th>
+                      <th className="px-3 py-2">Status</th>
+                      <th className="px-3 py-2">IP</th>
+                      <th className="px-3 py-2">Duration</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {logs.map((row) => (
+                      <tr key={row._id} className="border-t border-border">
+                        <td className="px-3 py-2">{formatDate(row.createdAt)}</td>
+                        <td className="px-3 py-2 font-mono">{row.method}</td>
+                        <td className="px-3 py-2 font-mono text-xs">{row.path}</td>
+                        <td className="px-3 py-2">{row.statusCode}</td>
+                        <td className="px-3 py-2 text-xs">{row.ipAddress ?? "-"}</td>
+                        <td className="px-3 py-2">{row.durationMs}ms</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-muted-foreground">Total filtered: {logsResult.total}</p>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="cursor-pointer"
+                    disabled={cursorHistory.length === 0}
+                    onClick={() => {
+                      const prevHistory = [...cursorHistory]
+                      const previous = prevHistory.pop()
+                      setCursorHistory(prevHistory)
+                      setCursor(previous ?? 0)
+                    }}
+                  >
+                    Prev
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="cursor-pointer"
+                    disabled={logsResult.nextCursor === null}
+                    onClick={() => {
+                      setCursorHistory([...cursorHistory, cursor])
+                      setCursor(logsResult.nextCursor ?? cursor)
+                    }}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            </>
           )}
         </section>
 
@@ -165,11 +277,22 @@ export default function ApiDashboardPage() {
             <h2 className="text-sm font-medium text-muted-foreground">API Keys</h2>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-2">
+          <div className="space-y-2 rounded-md border border-border p-3">
             <Input
               placeholder="Key name (e.g. Production Backend)"
               value={newKeyName}
               onChange={(event) => setNewKeyName(event.target.value)}
+            />
+            <ScopeSelector value={newKeyScopes} onChange={setNewKeyScopes} />
+            <Input
+              placeholder="Rate limit per minute"
+              value={newRateLimit}
+              onChange={(event) => setNewRateLimit(event.target.value)}
+            />
+            <Input
+              placeholder="IP allowlist (comma separated)"
+              value={newIpAllowlist}
+              onChange={(event) => setNewIpAllowlist(event.target.value)}
             />
             <Button onClick={onCreateKey} className="cursor-pointer">
               Create Key
@@ -178,9 +301,7 @@ export default function ApiDashboardPage() {
 
           {lastCreated && (
             <div className="rounded-md border border-primary/30 bg-primary/5 p-3 space-y-2">
-              <p className="text-xs text-muted-foreground">
-                Save this now. The full key is shown only once.
-              </p>
+              <p className="text-xs text-muted-foreground">Save this now. The full key is shown only once.</p>
               <div className="flex items-center gap-2">
                 <code className="flex-1 overflow-x-auto rounded bg-muted px-2 py-1 text-xs">{lastCreated.apiKey}</code>
                 <Button variant="outline" size="sm" className="cursor-pointer" onClick={() => copy(lastCreated.apiKey)}>
@@ -197,29 +318,81 @@ export default function ApiDashboardPage() {
             <p className="text-sm text-muted-foreground">No API keys yet.</p>
           ) : (
             <div className="space-y-2">
-              {keys.map((key) => (
-                <div key={key._id} className="rounded-md border border-border p-3 flex items-center justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium">{key.name}</p>
-                    <p className="text-xs text-muted-foreground font-mono">
-                      {key.keyPrefix}... | {key.status} | created {formatDate(key.createdAt)}
-                    </p>
-                    {key.lastUsedAt && (
-                      <p className="text-xs text-muted-foreground">last used {formatDate(key.lastUsedAt)}</p>
-                    )}
+              {keys.map((key) => {
+                const draft = draftPolicies[key._id] ?? {
+                  name: key.name,
+                  scopes: key.scopes ?? [],
+                  ipAllowlist: key.ipAllowlist ?? [],
+                  rateLimitPerMinute: key.rateLimitPerMinute ?? 120,
+                }
+
+                return (
+                  <div key={key._id} className="rounded-md border border-border p-3 space-y-2">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium">{key.name}</p>
+                        <p className="text-xs text-muted-foreground font-mono">
+                          {key.keyPrefix}... | {key.status} | created {formatDate(key.createdAt)}
+                        </p>
+                      </div>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        className="cursor-pointer"
+                        disabled={key.status === "revoked"}
+                        onClick={() => revokeKey({ id: key._id })}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        Revoke
+                      </Button>
+                    </div>
+
+                    <Input
+                      value={draft.name}
+                      onChange={(event) => setDraftPolicies({
+                        ...draftPolicies,
+                        [key._id]: { ...draft, name: event.target.value },
+                      })}
+                    />
+                    <ScopeSelector
+                      value={draft.scopes}
+                      onChange={(scopes) => setDraftPolicies({
+                        ...draftPolicies,
+                        [key._id]: { ...draft, scopes },
+                      })}
+                    />
+                    <Input
+                      value={String(draft.rateLimitPerMinute ?? "")}
+                      onChange={(event) => setDraftPolicies({
+                        ...draftPolicies,
+                        [key._id]: { ...draft, rateLimitPerMinute: Number(event.target.value) || undefined },
+                      })}
+                      placeholder="Rate limit per minute"
+                    />
+                    <Input
+                      value={(draft.ipAllowlist ?? []).join(", ")}
+                      onChange={(event) => setDraftPolicies({
+                        ...draftPolicies,
+                        [key._id]: {
+                          ...draft,
+                          ipAllowlist: event.target.value.split(",").map((item) => item.trim()).filter(Boolean),
+                        },
+                      })}
+                      placeholder="IP allowlist (comma separated)"
+                    />
+
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="cursor-pointer"
+                      onClick={() => onSavePolicy(key)}
+                    >
+                      <Save className="h-3.5 w-3.5" />
+                      Save Policy
+                    </Button>
                   </div>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    className="cursor-pointer"
-                    disabled={key.status === "revoked"}
-                    onClick={() => revokeKey({ id: key._id })}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                    Revoke
-                  </Button>
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </section>

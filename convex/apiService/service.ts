@@ -1,6 +1,6 @@
 import { mutation, query } from "../_generated/server"
 import { v } from "convex/values"
-import { hashApiKey } from "../lib/apiKeys"
+import { createApiKeyToken, DEFAULT_API_SCOPES, hasScope, hashApiKey, normalizeIp } from "../lib/apiKeys"
 
 const policyValidator = v.object({
   type: v.string(),
@@ -33,6 +33,11 @@ async function resolveActiveKey(ctx: any, apiKey: string) {
   return key
 }
 
+function sanitizeKeyRecord(key: any) {
+  const { keyHash: _, ...rest } = key
+  return rest
+}
+
 function computeResetAt(period: string): number {
   const now = new Date()
   if (period === "daily") {
@@ -55,23 +60,53 @@ function computeResetAt(period: string): number {
   return 0
 }
 
-export const authenticateApiKey = mutation({
+export const authorizeApiRequest = mutation({
   args: {
     apiKey: v.string(),
+    requiredScope: v.string(),
+    ipAddress: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const key = await resolveActiveKey(ctx, args.apiKey)
     if (!key) return null
+    const normalizedIp = normalizeIp(args.ipAddress)
+
+    if (!hasScope(key.scopes ?? [], args.requiredScope)) {
+      return { ok: false, reason: "INSUFFICIENT_SCOPE" as const }
+    }
+
+    if (key.ipAllowlist && key.ipAllowlist.length > 0) {
+      if (!normalizedIp || !key.ipAllowlist.map((ip: string) => normalizeIp(ip)).includes(normalizedIp)) {
+        return { ok: false, reason: "IP_NOT_ALLOWED" as const }
+      }
+    }
+
+    const rateLimit = key.rateLimitPerMinute ?? 120
+    if (rateLimit > 0) {
+      const windowStart = Date.now() - 60_000
+      const recentLogs = await ctx.db
+        .query("apiRequestLogs")
+        .withIndex("by_key", (q: any) => q.eq("apiKeyId", key._id))
+        .collect()
+      const count = recentLogs.filter((log: any) => log.createdAt >= windowStart).length
+      if (count >= rateLimit) {
+        return { ok: false, reason: "RATE_LIMITED" as const }
+      }
+    }
 
     await ctx.db.patch(key._id, {
       lastUsedAt: Date.now(),
     })
 
     return {
+      ok: true,
       apiKeyId: key._id,
       userId: key.userId,
       keyName: key.name,
       keyPrefix: key.keyPrefix,
+      scopes: key.scopes ?? [],
+      ipAllowlist: key.ipAllowlist ?? [],
+      rateLimitPerMinute: key.rateLimitPerMinute ?? 120,
     }
   },
 })
@@ -84,6 +119,7 @@ export const logApiRequest = mutation({
     statusCode: v.number(),
     durationMs: v.number(),
     requestId: v.string(),
+    ipAddress: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const key = await resolveActiveKey(ctx, args.apiKey)
@@ -99,9 +135,108 @@ export const logApiRequest = mutation({
       statusCode: args.statusCode,
       durationMs: args.durationMs,
       requestId: args.requestId,
+      ipAddress: normalizeIp(args.ipAddress),
       createdAt: Date.now(),
     })
 
+    return { ok: true }
+  },
+})
+
+export const listApiKeys = query({
+  args: { userId: v.string() },
+  handler: async (ctx, args) => {
+    const keys = await ctx.db
+      .query("apiKeys")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .collect()
+    return keys.sort((a, b) => b.createdAt - a.createdAt).map(sanitizeKeyRecord)
+  },
+})
+
+export const createApiKey = mutation({
+  args: {
+    userId: v.string(),
+    name: v.string(),
+    scopes: v.optional(v.array(v.string())),
+    ipAllowlist: v.optional(v.array(v.string())),
+    rateLimitPerMinute: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const next = createApiKeyToken()
+    const now = Date.now()
+    const scopes = (args.scopes && args.scopes.length > 0) ? args.scopes : [...DEFAULT_API_SCOPES]
+    const ipAllowlist = args.ipAllowlist?.map((ip) => normalizeIp(ip)).filter(Boolean) as string[] | undefined
+
+    const id = await ctx.db.insert("apiKeys", {
+      userId: args.userId,
+      name: args.name,
+      keyHash: next.hash,
+      keyPrefix: next.prefix,
+      scopes,
+      ipAllowlist,
+      rateLimitPerMinute: args.rateLimitPerMinute,
+      status: "active",
+      createdAt: now,
+    })
+
+    return {
+      id,
+      apiKey: next.token,
+      keyPrefix: next.prefix,
+      name: args.name,
+      scopes,
+      ipAllowlist,
+      rateLimitPerMinute: args.rateLimitPerMinute,
+      status: "active" as const,
+      createdAt: now,
+    }
+  },
+})
+
+export const updateApiKeyPolicy = mutation({
+  args: {
+    userId: v.string(),
+    apiKeyId: v.id("apiKeys"),
+    name: v.optional(v.string()),
+    scopes: v.optional(v.array(v.string())),
+    ipAllowlist: v.optional(v.array(v.string())),
+    rateLimitPerMinute: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const key = await ctx.db.get(args.apiKeyId)
+    if (!key || key.userId !== args.userId) {
+      throw new Error("API key not found")
+    }
+
+    const patch: Record<string, unknown> = {}
+    if (args.name !== undefined) patch.name = args.name
+    if (args.scopes !== undefined) patch.scopes = args.scopes
+    if (args.ipAllowlist !== undefined) {
+      patch.ipAllowlist = args.ipAllowlist.map((ip) => normalizeIp(ip)).filter(Boolean)
+    }
+    if (args.rateLimitPerMinute !== undefined) patch.rateLimitPerMinute = args.rateLimitPerMinute
+
+    await ctx.db.patch(args.apiKeyId, patch)
+    return sanitizeKeyRecord({ ...key, ...patch })
+  },
+})
+
+export const revokeApiKey = mutation({
+  args: {
+    userId: v.string(),
+    apiKeyId: v.id("apiKeys"),
+  },
+  handler: async (ctx, args) => {
+    const key = await ctx.db.get(args.apiKeyId)
+    if (!key || key.userId !== args.userId) {
+      throw new Error("API key not found")
+    }
+
+    await ctx.db.patch(args.apiKeyId, {
+      status: "revoked",
+      revokedAt: Date.now(),
+    })
     return { ok: true }
   },
 })
@@ -271,6 +406,7 @@ export const createTransaction = mutation({
   args: {
     userId: v.string(),
     accountId: v.id("smartAccounts"),
+    idempotencyKey: v.string(),
     hash: v.string(),
     from: v.string(),
     to: v.string(),
@@ -285,9 +421,28 @@ export const createTransaction = mutation({
       throw new Error("Account not found")
     }
 
+    const existing = await ctx.db
+      .query("transactions")
+      .withIndex("by_account_idempotency", (q) =>
+        q.eq("accountId", args.accountId).eq("idempotencyKey", args.idempotencyKey)
+      )
+      .first()
+
+    if (existing) {
+      if (
+        existing.to.toLowerCase() !== args.to.toLowerCase() ||
+        existing.value !== args.value ||
+        existing.direction !== args.direction
+      ) {
+        throw new Error("Idempotency key reuse with different payload")
+      }
+      return existing
+    }
+
     const id = await ctx.db.insert("transactions", {
       userId: args.userId,
       accountId: args.accountId,
+      idempotencyKey: args.idempotencyKey,
       hash: args.hash,
       from: args.from,
       to: args.to,
