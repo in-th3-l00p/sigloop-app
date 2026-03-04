@@ -115,23 +115,14 @@ export default function CardDashboardPage() {
           </div>
         </div>
 
-        {/* Card Info */}
         <CardInfoSection
           card={card}
           cardWithSecret={cardWithSecret}
           updateCard={updateCard}
         />
-
-        {/* Spending */}
         <SpendingSection card={card} updateCard={updateCard} />
-
-        {/* Policies */}
         <PoliciesSection card={card} updateCard={updateCard} />
-
-        {/* Transactions */}
         <CardTransactionsSection transactions={transactions} chain={card.chain} />
-
-        {/* Danger zone */}
         <DangerSection
           card={card}
           updateCard={updateCard}
@@ -468,7 +459,6 @@ function PoliciesSection({ card, updateCard }) {
             </div>
           </div>
 
-          {/* Allowed contracts */}
           <div className="space-y-2">
             <p className="text-xs font-medium">Allowed Contracts</p>
             {pendingPolicies.filter((p) => p.type === "allowedContract").length > 0 && (
@@ -561,7 +551,7 @@ function CardTransactionsSection({ transactions, chain }) {
   return (
     <div className="rounded-lg border border-border p-5 space-y-4">
       <h2 className="text-sm font-medium text-muted-foreground">Transactions</h2>
-      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+      {/* <div className="flex items-center gap-3 text-xs text-muted-foreground">
         {TX_STATUS_LEGEND.map((item) => {
           const meta = getTxStatusMeta(item.status)
           return (
@@ -571,7 +561,7 @@ function CardTransactionsSection({ transactions, chain }) {
             </div>
           )
         })}
-      </div>
+      </div> */}
 
       {transactions === undefined ? (
         <div className="space-y-3">

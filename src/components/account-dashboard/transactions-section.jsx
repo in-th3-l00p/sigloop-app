@@ -22,17 +22,6 @@ export function TransactionsSection({ account }) {
           <SendDialog account={account} />
         </div>
       </div>
-      <div className="flex items-center gap-3 text-xs text-muted-foreground">
-        {TX_STATUS_LEGEND.map((item) => {
-          const meta = getTxStatusMeta(item.status)
-          return (
-            <div key={item.status} className="flex items-center gap-1.5">
-              <span className={`inline-block h-1.5 w-1.5 rounded-full ${meta.dotClass}`} />
-              <span>{item.label}</span>
-            </div>
-          )
-        })}
-      </div>
 
       {transactions === undefined ? (
         <div className="space-y-3">
