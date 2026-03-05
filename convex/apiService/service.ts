@@ -19,16 +19,12 @@ const configValidator = v.optional(v.object({
   escalationPolicy: v.optional(v.string()),
 }))
 
-async function resolveActiveKey(ctx: any, apiKey: string) {
+async function resolveKey(ctx: any, apiKey: string) {
   const keyHash = hashApiKey(apiKey)
   const key = await ctx.db
     .query("apiKeys")
     .withIndex("by_hash", (q: any) => q.eq("keyHash", keyHash))
     .first()
-
-  if (!key || key.status !== "active") {
-    return null
-  }
 
   return key
 }
@@ -67,8 +63,11 @@ export const authorizeApiRequest = mutation({
     ipAddress: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const key = await resolveActiveKey(ctx, args.apiKey)
+    const key = await resolveKey(ctx, args.apiKey)
     if (!key) return null
+    if (key.status === "revoked") return { ok: false, reason: "REVOKED" as const }
+    if (key.status === "paused") return { ok: false, reason: "PAUSED" as const }
+    if (key.status !== "active") return { ok: false, reason: "REVOKED" as const }
     const normalizedIp = normalizeIp(args.ipAddress)
 
     if (!hasScope(key.scopes ?? [], args.requiredScope)) {
@@ -122,8 +121,8 @@ export const logApiRequest = mutation({
     ipAddress: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const key = await resolveActiveKey(ctx, args.apiKey)
-    if (!key) {
+    const key = await resolveKey(ctx, args.apiKey)
+    if (!key || key.status !== "active") {
       return null
     }
 

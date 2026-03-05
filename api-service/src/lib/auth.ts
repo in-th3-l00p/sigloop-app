@@ -42,6 +42,12 @@ export function apiKeyAuth(store: ApiStore, requiredScope: ApiScope): Middleware
       if (auth.reason === "RATE_LIMITED") {
         throw new ApiError(429, "RATE_LIMITED", "Rate limit exceeded for this API key")
       }
+      if (auth.reason === "PAUSED") {
+        throw new ApiError(403, "API_KEY_PAUSED", "API key is paused")
+      }
+      if (auth.reason === "REVOKED") {
+        throw new ApiError(401, "API_KEY_REVOKED", "API key is revoked")
+      }
       throw new ApiError(403, "API_KEY_FORBIDDEN", "API key is not authorized for this request")
     }
 

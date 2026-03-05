@@ -3,7 +3,7 @@ import { Link, Navigate } from "react-router-dom"
 import { usePrivy } from "@privy-io/react-auth"
 import { useConvexAuth, useMutation, useQuery } from "convex/react"
 import { api } from "../../convex/_generated/api"
-import { Activity, ArrowLeft, Copy, KeyRound, Pencil, Plus, Trash2 } from "lucide-react"
+import { Activity, ArrowLeft, Copy, KeyRound, Pencil, Plus, Trash2, Eye, Pause, Play } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -201,6 +201,86 @@ function ApiKeyDialog({
   )
 }
 
+function ApiKeyDetailsDialog({ apiKey }) {
+  const usage = useQuery(api.apiRequestLogs.apiRequestLogs.usage, {
+    days: 7,
+    apiKeyId: apiKey._id,
+  })
+  const logsResult = useQuery(api.apiRequestLogs.apiRequestLogs.list, {
+    limit: 50,
+    apiKeyId: apiKey._id,
+  })
+  const logs = logsResult?.items ?? []
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" className="cursor-pointer">
+          <Eye className="h-3.5 w-3.5" />
+          Open
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-3xl">
+        <DialogHeader>
+          <DialogTitle>{apiKey.name}</DialogTitle>
+          <DialogDescription>
+            API key activity and request logs.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="rounded-md bg-muted/50 px-3 py-2">
+              <p className="text-xs text-muted-foreground">Total</p>
+              <p className="text-xl font-semibold">{usage?.total ?? 0}</p>
+            </div>
+            <div className="rounded-md bg-muted/50 px-3 py-2">
+              <p className="text-xs text-muted-foreground">Success</p>
+              <p className="text-xl font-semibold">{usage?.success ?? 0}</p>
+            </div>
+            <div className="rounded-md bg-muted/50 px-3 py-2">
+              <p className="text-xs text-muted-foreground">Error</p>
+              <p className="text-xl font-semibold">{usage?.error ?? 0}</p>
+            </div>
+          </div>
+          <UsageBars points={usage?.perDay ?? []} />
+
+          <div className="max-h-80 overflow-y-auto rounded-md border border-border">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
+                <tr>
+                  <th className="px-3 py-2">Time</th>
+                  <th className="px-3 py-2">Method</th>
+                  <th className="px-3 py-2">Path</th>
+                  <th className="px-3 py-2">Status</th>
+                  <th className="px-3 py-2">IP</th>
+                </tr>
+              </thead>
+              <tbody>
+                {logs.length === 0 ? (
+                  <tr>
+                    <td className="px-3 py-4 text-sm text-muted-foreground" colSpan={5}>
+                      No API calls for this key.
+                    </td>
+                  </tr>
+                ) : logs.map((row) => (
+                  <tr key={row._id} className="border-t border-border">
+                    <td className="px-3 py-2">{formatDate(row.createdAt)}</td>
+                    <td className="px-3 py-2 font-mono">{row.method}</td>
+                    <td className="px-3 py-2 font-mono text-xs">{row.path}</td>
+                    <td className="px-3 py-2">{row.statusCode}</td>
+                    <td className="px-3 py-2 text-xs">{row.ipAddress ?? "-"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 export default function ApiDashboardPage() {
   const { logout } = usePrivy()
   const { isLoading: authLoading, isAuthenticated } = useConvexAuth()
@@ -224,11 +304,14 @@ export default function ApiDashboardPage() {
 
   const keys = useQuery(api.apiKeys.apiKeys.list)
   const createKey = useMutation(api.apiKeys.apiKeys.create)
-  const revokeKey = useMutation(api.apiKeys.apiKeys.revoke)
+  const setKeyStatus = useMutation(api.apiKeys.apiKeys.setStatus)
+  const removeKey = useMutation(api.apiKeys.apiKeys.remove)
   const updateKeyPolicy = useMutation(api.apiKeys.apiKeys.updatePolicy)
 
   const [lastCreated, setLastCreated] = useState(null)
+  const [showCreatedKeyDialog, setShowCreatedKeyDialog] = useState(false)
   const [copied, copy] = useCopyToClipboard()
+  const [confirmDeleteKeyId, setConfirmDeleteKeyId] = useState(null)
 
   if (authLoading) {
     return (
@@ -402,22 +485,10 @@ export default function ApiDashboardPage() {
               onSubmit={async (payload) => {
                 const created = await createKey(payload)
                 setLastCreated(created)
+                setShowCreatedKeyDialog(true)
               }}
             />
           </div>
-
-          {lastCreated && (
-            <div className="rounded-md border border-primary/30 bg-primary/5 p-3 space-y-2">
-              <p className="text-xs text-muted-foreground">Save this now. The full key is shown only once.</p>
-              <div className="flex items-center gap-2">
-                <code className="flex-1 overflow-x-auto rounded bg-muted px-2 py-1 text-xs">{lastCreated.apiKey}</code>
-                <Button variant="outline" size="sm" className="cursor-pointer" onClick={() => copy(lastCreated.apiKey)}>
-                  <Copy className="h-3.5 w-3.5" />
-                  {copied ? "Copied" : "Copy"}
-                </Button>
-              </div>
-            </div>
-          )}
 
           {keys === undefined ? (
             <p className="text-sm text-muted-foreground">Loading keys...</p>
@@ -437,6 +508,7 @@ export default function ApiDashboardPage() {
                     )}
                   </div>
                   <div className="flex items-center gap-2">
+                    <ApiKeyDetailsDialog apiKey={key} />
                     <ApiKeyDialog
                       trigger={(
                         <Button variant="outline" size="sm" className="cursor-pointer" disabled={key.status === "revoked"}>
@@ -456,14 +528,41 @@ export default function ApiDashboardPage() {
                       onSubmit={(payload) => updateKeyPolicy({ id: key._id, ...payload })}
                     />
                     <Button
-                      variant="destructive"
+                      variant="outline"
                       size="sm"
                       className="cursor-pointer"
                       disabled={key.status === "revoked"}
-                      onClick={() => revokeKey({ id: key._id })}
+                      onClick={() => setKeyStatus({
+                        id: key._id,
+                        status: key.status === "paused" ? "active" : "paused",
+                      })}
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
-                      Revoke
+                      {key.status === "paused" ? (
+                        <>
+                          <Play className="h-3.5 w-3.5" />
+                          Resume
+                        </>
+                      ) : (
+                        <>
+                          <Pause className="h-3.5 w-3.5" />
+                          Pause
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      className="cursor-pointer"
+                      onClick={async () => {
+                        if (confirmDeleteKeyId !== key._id) {
+                          setConfirmDeleteKeyId(key._id)
+                          return
+                        }
+                        await removeKey({ id: key._id })
+                        setConfirmDeleteKeyId(null)
+                      }}
+                    >
+                      {confirmDeleteKeyId === key._id ? "Confirm Delete" : "Delete"}
                     </Button>
                   </div>
                 </div>
@@ -471,6 +570,45 @@ export default function ApiDashboardPage() {
             </div>
           )}
         </section>
+
+        <Dialog
+          open={showCreatedKeyDialog && !!lastCreated}
+          onOpenChange={(open) => {
+            setShowCreatedKeyDialog(open)
+            if (!open) {
+              setLastCreated(null)
+            }
+          }}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>API key created</DialogTitle>
+              <DialogDescription>
+                Save this now. The full key is shown only once.
+              </DialogDescription>
+            </DialogHeader>
+            {lastCreated && (
+              <div className="flex items-center gap-2">
+                <code className="flex-1 overflow-x-auto rounded bg-muted px-2 py-1 text-xs">{lastCreated.apiKey}</code>
+                <Button variant="outline" size="sm" className="cursor-pointer" onClick={() => copy(lastCreated.apiKey)}>
+                  <Copy className="h-3.5 w-3.5" />
+                  {copied ? "Copied" : "Copy"}
+                </Button>
+              </div>
+            )}
+            <DialogFooter>
+              <Button
+                className="cursor-pointer"
+                onClick={() => {
+                  setShowCreatedKeyDialog(false)
+                  setLastCreated(null)
+                }}
+              >
+                Done
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   )

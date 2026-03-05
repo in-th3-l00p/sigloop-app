@@ -101,7 +101,7 @@ export default defineSchema({
     scopes: v.array(v.string()),
     ipAllowlist: v.optional(v.array(v.string())),
     rateLimitPerMinute: v.optional(v.float64()),
-    status: v.union(v.literal("active"), v.literal("revoked")),
+    status: v.union(v.literal("active"), v.literal("paused"), v.literal("revoked")),
     lastUsedAt: v.optional(v.float64()),
     createdAt: v.float64(),
     revokedAt: v.optional(v.float64()),

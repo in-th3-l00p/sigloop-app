@@ -89,6 +89,30 @@ export const updatePolicy = mutation({
   },
 })
 
+export const setStatus = mutation({
+  args: {
+    id: v.id("apiKeys"),
+    status: v.union(v.literal("active"), v.literal("paused"), v.literal("revoked")),
+  },
+  handler: async (ctx, args) => {
+    const userId = await requireAuth(ctx, "apiKeys.setStatus")
+    const key = await ctx.db.get(args.id)
+    if (!key || key.userId !== userId) {
+      throw new Error("API key not found")
+    }
+
+    const patch: Record<string, unknown> = {
+      status: args.status,
+    }
+    if (args.status === "revoked") {
+      patch.revokedAt = Date.now()
+    }
+
+    await ctx.db.patch(args.id, patch)
+    return { ...key, ...patch, keyHash: undefined }
+  },
+})
+
 export const revoke = mutation({
   args: {
     id: v.id("apiKeys"),
@@ -104,5 +128,30 @@ export const revoke = mutation({
       status: "revoked",
       revokedAt: Date.now(),
     })
+  },
+})
+
+export const remove = mutation({
+  args: {
+    id: v.id("apiKeys"),
+  },
+  handler: async (ctx, args) => {
+    const userId = await requireAuth(ctx, "apiKeys.remove")
+    const key = await ctx.db.get(args.id)
+    if (!key || key.userId !== userId) {
+      throw new Error("API key not found")
+    }
+
+    const logs = await ctx.db
+      .query("apiRequestLogs")
+      .withIndex("by_key", (q) => q.eq("apiKeyId", args.id))
+      .collect()
+
+    for (const log of logs) {
+      await ctx.db.delete(log._id)
+    }
+
+    await ctx.db.delete(args.id)
+    return { ok: true }
   },
 })

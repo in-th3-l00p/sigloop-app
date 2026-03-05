@@ -12,7 +12,7 @@ export interface ApiKeyContext {
 
 export interface ApiAuthorizationFailure {
   ok: false
-  reason: "INSUFFICIENT_SCOPE" | "IP_NOT_ALLOWED" | "RATE_LIMITED"
+  reason: "INSUFFICIENT_SCOPE" | "IP_NOT_ALLOWED" | "RATE_LIMITED" | "PAUSED" | "REVOKED"
 }
 
 export interface ApiAuthorizationSuccess extends ApiKeyContext {

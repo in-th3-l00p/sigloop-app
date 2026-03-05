@@ -61,6 +61,7 @@ export const list = query({
 export const usage = query({
   args: {
     days: v.optional(v.number()),
+    apiKeyId: v.optional(v.id("apiKeys")),
   },
   handler: async (ctx, args) => {
     const userId = await requireAuth(ctx, "apiRequestLogs.usage")
@@ -72,7 +73,11 @@ export const usage = query({
       .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect()
 
-    const filtered = rows.filter((item) => item.createdAt >= since)
+    const filtered = rows.filter((item) => {
+      if (item.createdAt < since) return false
+      if (args.apiKeyId && item.apiKeyId !== args.apiKeyId) return false
+      return true
+    })
 
     const byDay = new Map<string, { total: number; success: number; error: number }>()
     for (const row of filtered) {
