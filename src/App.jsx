@@ -6,6 +6,8 @@ import AccountDashboardPage from "@/pages/account-dashboard"
 import CardDashboardPage from "@/pages/card-dashboard"
 import ApiDashboardPage from "@/pages/api-dashboard"
 import DocsPage from "@/pages/docs"
+import StatsPage from "@/pages/stats"
+import LogsPage from "@/pages/logs"
 
 function App() {
   const { ready } = usePrivy()
@@ -20,6 +22,8 @@ function App() {
       <Route path="/app/dashboard" element={<DashboardPage />} />
       <Route path="/app/api" element={<ApiDashboardPage />} />
       <Route path="/app/docs" element={<DocsPage />} />
+      <Route path="/app/stats" element={<StatsPage />} />
+      <Route path="/app/logs" element={<LogsPage />} />
       <Route path="/app/dashboard/:accountId" element={<AccountDashboardPage />} />
       <Route path="/app/dashboard/:accountId/card/:cardId" element={<CardDashboardPage />} />
       <Route path="*" element={<Navigate to="/app" replace />} />
