@@ -3,8 +3,6 @@ import { useConvexAuth } from "convex/react"
 import { Navigate, Link, useSearchParams } from "react-router-dom"
 import { ArrowLeft, BookOpen, CreditCard, Bot, Server, ChevronRight, Package } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Separator } from "@/components/ui/separator"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { GeneralDocs } from "@/components/docs/general-docs"
 import { CardServiceDocs } from "@/components/docs/card-service-docs"
@@ -157,34 +155,23 @@ function DocsSidebar({ activeSection, onSelect }) {
   }
 
   return (
-    <div className="w-56 shrink-0 border-r border-border">
-      <div className="p-4 pb-3">
-        <Link to="/app/dashboard">
-          <Button variant="ghost" size="sm" className="cursor-pointer gap-1.5 -ml-2">
-            <ArrowLeft className="h-3.5 w-3.5" />
-            Dashboard
-          </Button>
-        </Link>
-      </div>
-      <Separator />
-      <ScrollArea className="h-[calc(100vh-57px)]">
-        <nav className="p-3 space-y-1">
-          <p className="px-2 py-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-            Documentation
-          </p>
-          {SIDEBAR_ITEMS.map((item) => (
-            <SidebarItem
-              key={item.id}
-              item={item}
-              activeSection={activeSection}
-              onSelect={handleSelect}
-              expandedGroups={expandedGroups}
-              onToggleGroup={handleToggleGroup}
-            />
-          ))}
-        </nav>
-      </ScrollArea>
-    </div>
+    <aside className="fixed top-14 left-0 bottom-0 w-56 border-r border-border overflow-y-auto">
+      <nav className="p-3 space-y-1">
+        <p className="px-2 py-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+          Documentation
+        </p>
+        {SIDEBAR_ITEMS.map((item) => (
+          <SidebarItem
+            key={item.id}
+            item={item}
+            activeSection={activeSection}
+            onSelect={handleSelect}
+            expandedGroups={expandedGroups}
+            onToggleGroup={handleToggleGroup}
+          />
+        ))}
+      </nav>
+    </aside>
   )
 }
 
@@ -239,18 +226,24 @@ export default function DocsPage() {
   }
 
   return (
-    <div className="flex min-h-screen">
+    <div className="min-h-screen">
+      <header className="fixed top-0 left-0 right-0 z-10 flex h-14 items-center justify-between border-b border-border bg-background px-4">
+        <Link to="/app/dashboard">
+          <Button variant="ghost" size="sm" className="cursor-pointer gap-1.5">
+            <ArrowLeft className="h-3.5 w-3.5" />
+            Dashboard
+          </Button>
+        </Link>
+        <ThemeToggle />
+      </header>
+
       <DocsSidebar activeSection={activeSection} onSelect={handleSelect} />
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-end p-4 border-b border-border">
-          <ThemeToggle />
+
+      <main className="ml-56 pt-14 h-screen overflow-y-auto">
+        <div className="mx-auto max-w-3xl p-8">
+          <DocsContent section={activeSection} />
         </div>
-        <ScrollArea className="h-[calc(100vh-57px)]">
-          <div className="mx-auto max-w-3xl p-8">
-            <DocsContent section={activeSection} />
-          </div>
-        </ScrollArea>
-      </div>
+      </main>
     </div>
   )
 }
