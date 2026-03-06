@@ -73,9 +73,9 @@ function AccountSection() {
 
 const QUICK_ACCESS_ITEMS = [
   { section: "general", label: "General", icon: BookOpen, desc: "Overview & concepts" },
-  { section: "card-service", label: "Card Service", icon: CreditCard, desc: "API & SDK" },
+  { section: "card-api", label: "Card Service", icon: CreditCard, desc: "API & SDK" },
   { section: "agent-integration", label: "AI Agents", icon: Bot, desc: "Agent integrations" },
-  { section: "api-service", label: "API Service", icon: Server, desc: "API & SDK" },
+  { section: "api-ref", label: "API Service", icon: Server, desc: "API & SDK" },
 ]
 
 function QuickAccessSection() {

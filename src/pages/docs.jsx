@@ -1,25 +1,142 @@
 import { useState } from "react"
-import { usePrivy } from "@privy-io/react-auth"
 import { useConvexAuth } from "convex/react"
 import { Navigate, Link, useSearchParams } from "react-router-dom"
-import { ArrowLeft, BookOpen, CreditCard, Bot, Server } from "lucide-react"
+import { ArrowLeft, BookOpen, CreditCard, Bot, Server, ChevronRight, Package } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { GeneralDocs } from "@/components/docs/general-docs"
 import { CardServiceDocs } from "@/components/docs/card-service-docs"
+import { CardSdkDocs } from "@/components/docs/card-sdk-docs"
 import { AgentIntegrationDocs } from "@/components/docs/agent-integration-docs"
 import { ApiServiceDocs } from "@/components/docs/api-service-docs"
+import { ApiSdkDocs } from "@/components/docs/api-sdk-docs"
 
-const SECTIONS = [
+const SIDEBAR_ITEMS = [
   { id: "general", label: "General", icon: BookOpen },
-  { id: "card-service", label: "Card Service", icon: CreditCard },
+  {
+    id: "card",
+    label: "Card Interaction",
+    icon: CreditCard,
+    children: [
+      { id: "card-api", label: "API Reference" },
+      { id: "card-sdk", label: "SDK" },
+    ],
+  },
   { id: "agent-integration", label: "AI Agent Integration", icon: Bot },
-  { id: "api-service", label: "API Service & SDK", icon: Server },
+  {
+    id: "api",
+    label: "API Interaction",
+    icon: Server,
+    children: [
+      { id: "api-ref", label: "API Reference" },
+      { id: "api-sdk", label: "SDK" },
+    ],
+  },
 ]
 
+function SidebarItem({ item, activeSection, onSelect, expandedGroups, onToggleGroup }) {
+  const Icon = item.icon
+  const hasChildren = Boolean(item.children)
+  const isExpanded = expandedGroups.has(item.id)
+  const isActive = activeSection === item.id
+  const isChildActive = hasChildren && item.children.some((c) => c.id === activeSection)
+
+  if (hasChildren) {
+    return (
+      <div>
+        <button
+          type="button"
+          onClick={() => onToggleGroup(item.id)}
+          className={`cursor-pointer w-full flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm transition-colors ${
+            isChildActive
+              ? "text-foreground font-medium"
+              : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+          }`}
+        >
+          <Icon className="h-4 w-4 shrink-0" />
+          <span className="flex-1 text-left">{item.label}</span>
+          <ChevronRight
+            className={`h-3.5 w-3.5 shrink-0 transition-transform duration-200 ${
+              isExpanded ? "rotate-90" : ""
+            }`}
+          />
+        </button>
+        {isExpanded && (
+          <div className="ml-4 mt-0.5 space-y-0.5 border-l border-border pl-3">
+            {item.children.map((child) => {
+              const childActive = activeSection === child.id
+              return (
+                <button
+                  key={child.id}
+                  type="button"
+                  onClick={() => onSelect(child.id)}
+                  className={`cursor-pointer w-full flex items-center gap-2 rounded-md px-2.5 py-1.5 text-sm transition-colors ${
+                    childActive
+                      ? "bg-accent text-accent-foreground font-medium"
+                      : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+                  }`}
+                >
+                  <Package className="h-3.5 w-3.5 shrink-0" />
+                  {child.label}
+                </button>
+              )
+            })}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect(item.id)}
+      className={`cursor-pointer w-full flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm transition-colors ${
+        isActive
+          ? "bg-accent text-accent-foreground font-medium"
+          : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+      }`}
+    >
+      <Icon className="h-4 w-4 shrink-0" />
+      {item.label}
+    </button>
+  )
+}
+
 function DocsSidebar({ activeSection, onSelect }) {
+  const [expandedGroups, setExpandedGroups] = useState(() => {
+    const initial = new Set()
+    for (const item of SIDEBAR_ITEMS) {
+      if (item.children?.some((c) => c.id === activeSection)) {
+        initial.add(item.id)
+      }
+    }
+    return initial
+  })
+
+  const handleToggleGroup = (groupId) => {
+    setExpandedGroups((prev) => {
+      const next = new Set(prev)
+      if (next.has(groupId)) {
+        next.delete(groupId)
+      } else {
+        next.add(groupId)
+      }
+      return next
+    })
+  }
+
+  const handleSelect = (sectionId) => {
+    onSelect(sectionId)
+    for (const item of SIDEBAR_ITEMS) {
+      if (item.children?.some((c) => c.id === sectionId)) {
+        setExpandedGroups((prev) => new Set(prev).add(item.id))
+      }
+    }
+  }
+
   return (
     <div className="w-56 shrink-0 border-r border-border">
       <div className="p-4 pb-3">
@@ -36,25 +153,16 @@ function DocsSidebar({ activeSection, onSelect }) {
           <p className="px-2 py-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">
             Documentation
           </p>
-          {SECTIONS.map((section) => {
-            const Icon = section.icon
-            const isActive = activeSection === section.id
-            return (
-              <button
-                key={section.id}
-                type="button"
-                onClick={() => onSelect(section.id)}
-                className={`cursor-pointer w-full flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm transition-colors ${
-                  isActive
-                    ? "bg-accent text-accent-foreground font-medium"
-                    : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
-                }`}
-              >
-                <Icon className="h-4 w-4 shrink-0" />
-                {section.label}
-              </button>
-            )
-          })}
+          {SIDEBAR_ITEMS.map((item) => (
+            <SidebarItem
+              key={item.id}
+              item={item}
+              activeSection={activeSection}
+              onSelect={handleSelect}
+              expandedGroups={expandedGroups}
+              onToggleGroup={handleToggleGroup}
+            />
+          ))}
         </nav>
       </ScrollArea>
     </div>
@@ -63,12 +171,16 @@ function DocsSidebar({ activeSection, onSelect }) {
 
 function DocsContent({ section }) {
   switch (section) {
-    case "card-service":
+    case "card-api":
       return <CardServiceDocs />
+    case "card-sdk":
+      return <CardSdkDocs />
     case "agent-integration":
       return <AgentIntegrationDocs />
-    case "api-service":
+    case "api-ref":
       return <ApiServiceDocs />
+    case "api-sdk":
+      return <ApiSdkDocs />
     default:
       return <GeneralDocs />
   }
