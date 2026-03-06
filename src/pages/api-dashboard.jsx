@@ -329,7 +329,7 @@ export default function ApiDashboardPage() {
 
   return (
     <div className="min-h-screen p-8">
-      <div className="mx-auto max-w-5xl space-y-6">
+      <div className="mx-auto max-w-4xl space-y-8">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link to="/app/dashboard">
@@ -350,7 +350,7 @@ export default function ApiDashboardPage() {
           </div>
         </div>
 
-        <section className="rounded-lg border border-border p-5 space-y-4">
+        <section className="space-y-4 border-b border-border pb-8">
           <div className="flex items-center gap-2">
             <Activity className="h-4 w-4 text-muted-foreground" />
             <h2 className="text-sm font-medium text-muted-foreground">API Usage (7 days)</h2>
@@ -378,7 +378,7 @@ export default function ApiDashboardPage() {
           )}
         </section>
 
-        <section className="rounded-lg border border-border p-5 space-y-4">
+        <section className="space-y-4 border-b border-border pb-8">
           <h2 className="text-sm font-medium text-muted-foreground">API Logs</h2>
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
             <div className="space-y-2">
@@ -466,7 +466,7 @@ export default function ApiDashboardPage() {
           )}
         </section>
 
-        <section className="rounded-lg border border-border p-5 space-y-4">
+        <section className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <KeyRound className="h-4 w-4 text-muted-foreground" />

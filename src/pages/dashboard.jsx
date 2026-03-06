@@ -54,11 +54,6 @@ function AccountSection() {
         </div>
 
         <div className="flex items-center gap-2">
-          <Link to="/app/api">
-            <Button variant="outline" size="sm" className="cursor-pointer">
-              API
-            </Button>
-          </Link>
           <AccountDrawer>
             <Button variant="outline" size="sm" className="cursor-pointer gap-1.5">
               <Settings className="h-3.5 w-3.5" />
