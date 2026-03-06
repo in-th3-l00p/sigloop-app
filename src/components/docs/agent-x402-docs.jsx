@@ -44,21 +44,21 @@ export function AgentX402Docs() {
 
       <DocSection title="Flow Diagram">
         <div className="rounded-lg border border-border p-4">
-          <pre className="text-xs leading-relaxed overflow-x-auto">{`Agent              External Service         Card Service          Chain
-  |                      |                      |                   |
-  |-- GET /api/data ---->|                      |                   |
-  |<-- 402 Payment Req --|                      |                   |
-  |                      |                      |                   |
-  |-- POST /quote -------|--------------------->|                   |
-  |<-- { allowed } ------|----------------------|                   |
-  |                      |                      |                   |
-  |-- POST /transactions-|--------------------->|                   |
-  |                      |                      |-- submit tx ----->|
-  |<-- { hash } ---------|----------------------|<-- receipt -------|
-  |                      |                      |                   |
-  |-- GET /api/data ---->|                      |                   |
-  |   (with payment ref) |                      |                   |
-  |<-- 200 OK + data ----|                      |                   |`}</pre>
+          <pre className="text-xs font-mono leading-relaxed overflow-x-auto">{`Agent               External Service      Card Service           Chain
+  |                       |                     |                    |
+  |-- GET /api/data ----->|                     |                    |
+  |<-- 402 Payment Req ---|                     |                    |
+  |                       |                     |                    |
+  |-- POST /quote --------|-------------------->|                    |
+  |<-- { allowed } -------|---------------------|                    |
+  |                       |                     |                    |
+  |-- POST /transactions -|-------------------->|                    |
+  |                       |                     |-- submit tx ------>|
+  |<-- { hash } ----------|---------------------|<-- receipt --------|
+  |                       |                     |                    |
+  |-- GET /api/data ----->|                     |                    |
+  |   (with payment ref)  |                     |                    |
+  |<-- 200 OK + data -----|                     |                    |`}</pre>
         </div>
       </DocSection>
 

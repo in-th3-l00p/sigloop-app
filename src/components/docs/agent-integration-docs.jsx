@@ -24,18 +24,18 @@ export function AgentIntegrationDocs() {
           to the chain.
         </p>
         <div className="rounded-lg border border-border p-4 mt-3">
-          <pre className="text-xs leading-relaxed overflow-x-auto">{`Agent                    Card Service               Chain
-  |                          |                         |
-  |-- GET /v1/card/limits -->|                         |
-  |<-- limits, policies ----|                         |
-  |                          |                         |
-  |-- POST /quote ---------->| validate policies       |
-  |<-- { allowed: true } ---|                         |
-  |                          |                         |
-  |-- POST /transactions --->| enforce limits -------->|
-  |                          | check balance           |-- ZeroDev Kernel
-  |<-- { hash, status } ----|<-- tx receipt -----------|
-  |                          |                         |`}</pre>
+          <pre className="text-xs font-mono leading-relaxed overflow-x-auto">{`Agent                     Card Service                Chain
+  |                            |                         |
+  |-- GET /v1/card/limits ---->|                         |
+  |<-- limits, policies -------|                         |
+  |                            |                         |
+  |-- POST /quote ------------>| validate policies       |
+  |<-- { allowed: true } ------|                         |
+  |                            |                         |
+  |-- POST /transactions ----->| enforce limits -------->|
+  |                            | check balance           |-- ZeroDev Kernel
+  |<-- { hash, status } -------|<-- tx receipt ----------|
+  |                            |                         |`}</pre>
         </div>
       </DocSection>
 

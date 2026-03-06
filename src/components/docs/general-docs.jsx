@@ -38,21 +38,21 @@ export function GeneralDocs() {
 
       <DocSection title="Architecture">
         <div className="rounded-lg border border-border p-4 space-y-3">
-          <pre className="text-xs leading-relaxed overflow-x-auto">{`┌─────────────┐     ┌────────────────┐     ┌──────────────┐
-│  Dashboard  │────▶│  Convex (DB)   │◀────│  API Service │
-│  (React)    │     │  + Privy Auth   │     │  (Hono:8788) │
-└─────────────┘     └────────────────┘     └──────────────┘
-                           │                       │
-                    ┌──────┴──────┐          ┌─────┴─────┐
-                    │ Card Service│          │  ZeroDev  │
-                    │ (Hono:8787) │──────────│  Kernel   │
-                    └─────────────┘          └───────────┘
-                           │
-                    ┌──────┴──────┐
-                    │ AI Agents   │
-                    │ (via card   │
-                    │  secret)    │
-                    └─────────────┘`}</pre>
+          <pre className="text-xs font-mono leading-relaxed overflow-x-auto">{`+---------------+     +----------------+     +--------------+
+|   Dashboard   |---->|   Convex (DB)  |<----|  API Service  |
+|   (React)     |     |  + Privy Auth  |     |  (Hono:8788)  |
++---------------+     +----------------+     +--------------+
+                             |                      |
+                      +-------------+         +-----------+
+                      | Card Service|         |  ZeroDev  |
+                      | (Hono:8787) |---------| Kernel    |
+                      +-------------+         +-----------+
+                             |
+                      +-------------+
+                      |  AI Agents  |
+                      |  (via card  |
+                      |   secret)   |
+                      +-------------+`}</pre>
         </div>
       </DocSection>
 
