@@ -3,7 +3,7 @@ import { useConvexAuth, useQuery } from "convex/react"
 import { api } from "../../convex/_generated/api"
 import { Navigate } from "react-router-dom"
 import { Link } from "react-router-dom"
-import { Settings, Mail, Wallet } from "lucide-react"
+import { Settings, Mail, Wallet, BookOpen, CreditCard, Bot, Server } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { AccountDrawer } from "@/components/account-drawer"
 import { SmartAccountsSection } from "@/components/smart-accounts-section"
@@ -59,11 +59,6 @@ function AccountSection() {
               API
             </Button>
           </Link>
-          <Link to="/app/sdk/dashboard">
-            <Button variant="outline" size="sm" className="cursor-pointer">
-              SDK Mode
-            </Button>
-          </Link>
           <AccountDrawer>
             <Button variant="outline" size="sm" className="cursor-pointer gap-1.5">
               <Settings className="h-3.5 w-3.5" />
@@ -71,6 +66,35 @@ function AccountSection() {
             </Button>
           </AccountDrawer>
         </div>
+      </div>
+    </div>
+  )
+}
+
+const QUICK_ACCESS_ITEMS = [
+  { section: "general", label: "General", icon: BookOpen, desc: "Overview & concepts" },
+  { section: "card-service", label: "Card Service", icon: CreditCard, desc: "API & SDK" },
+  { section: "agent-integration", label: "AI Agents", icon: Bot, desc: "Agent integrations" },
+  { section: "api-service", label: "API Service", icon: Server, desc: "API & SDK" },
+]
+
+function QuickAccessSection() {
+  return (
+    <div className="rounded-lg border border-border p-4 space-y-3">
+      <h2 className="text-sm font-medium text-muted-foreground">Quick Access</h2>
+      <div className="grid grid-cols-4 gap-2">
+        {QUICK_ACCESS_ITEMS.map((item) => {
+          const Icon = item.icon
+          return (
+            <Link key={item.section} to={`/app/docs?section=${item.section}`}>
+              <div className="rounded-md border border-border p-3 hover:bg-accent/40 transition-colors cursor-pointer space-y-1.5">
+                <Icon className="h-4 w-4 text-muted-foreground" />
+                <p className="text-sm font-medium">{item.label}</p>
+                <p className="text-xs text-muted-foreground">{item.desc}</p>
+              </div>
+            </Link>
+          )
+        })}
       </div>
     </div>
   )
@@ -110,6 +134,7 @@ export default function DashboardPage() {
         </div>
 
         <AccountSection />
+        <QuickAccessSection />
         <SmartAccountsSection accounts={accounts} />
       </div>
     </div>
