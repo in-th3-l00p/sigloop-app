@@ -1,0 +1,12 @@
+{
+  "name": "card-sdk-usage-example",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node index.mjs"
+  },
+  "dependencies": {
+    "@sigloop/card": "file:../../packages/card-sdk",
+    "dotenv": "^17.2.3"
+  }
+}

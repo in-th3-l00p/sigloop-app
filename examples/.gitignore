@@ -1,0 +1,13 @@
+# Node artifacts
+**/node_modules/
+**/dist/
+**/coverage/
+
+# Runtime
+**/.DS_Store
+**/*.log
+
+# Environment
+**/.env
+**/.env.local
+**/.env.*.local

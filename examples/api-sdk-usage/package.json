@@ -1,0 +1,12 @@
+{
+  "name": "api-sdk-usage-example",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node index.mjs"
+  },
+  "dependencies": {
+    "@sigloop/api": "file:../../packages/api-sdk",
+    "dotenv": "^17.2.3"
+  }
+}
