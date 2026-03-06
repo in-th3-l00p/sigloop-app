@@ -2,6 +2,8 @@ import { serve } from "@hono/node-server"
 import { createApp } from "./app.js"
 import { ConvexCardStore } from "./data/convex-store.js"
 import { ZeroDevChainGateway } from "./lib/chain-gateway.js"
+import dotenv from "dotenv";
+dotenv.config();
 
 function getEnv(name: string): string {
   const value = process.env[name]
