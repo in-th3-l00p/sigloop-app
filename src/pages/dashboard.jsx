@@ -9,15 +9,6 @@ import { AccountDrawer } from "@/components/account-drawer"
 import { SmartAccountsSection } from "@/components/smart-accounts-section"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts"
 
 function AccountSection() {
   const { user } = usePrivy()
@@ -110,26 +101,10 @@ function QuickAccessSection() {
   )
 }
 
-function DashboardTooltip({ active, payload, label }) {
-  if (!active || !payload?.length) return null
-  return (
-    <div className="rounded-md border border-border bg-background px-3 py-2 text-xs shadow-sm">
-      <p className="font-medium mb-1">{label}</p>
-      {payload.map((entry) => (
-        <p key={entry.name} style={{ color: entry.color }}>
-          {entry.name}: {entry.value}
-        </p>
-      ))}
-    </div>
-  )
-}
-
 function ApiUsageSection() {
   const usage = useQuery(api.apiRequestLogs.apiRequestLogs.usage, { days: 7 })
 
   if (usage === undefined) return null
-
-  const hasData = usage.perDay.length > 0
 
   return (
     <div className="space-y-3">
@@ -155,17 +130,6 @@ function ApiUsageSection() {
           <p className="text-lg font-semibold">{usage.error}</p>
         </div>
       </div>
-      {hasData && (
-        <ResponsiveContainer width="100%" height={120}>
-          <AreaChart data={usage.perDay} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
-            <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-            <XAxis dataKey="day" tick={{ fontSize: 10 }} className="fill-muted-foreground" tickFormatter={(v) => v.slice(5)} />
-            <YAxis tick={{ fontSize: 10 }} className="fill-muted-foreground" allowDecimals={false} />
-            <Tooltip content={<DashboardTooltip />} />
-            <Area type="monotone" dataKey="total" name="Requests" stroke="hsl(221, 83%, 53%)" fill="hsl(221, 83%, 53%)" fillOpacity={0.15} strokeWidth={2} />
-          </AreaChart>
-        </ResponsiveContainer>
-      )}
     </div>
   )
 }
