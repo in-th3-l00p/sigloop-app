@@ -49,7 +49,7 @@ export default function LogsPage() {
 
   return (
     <div className="min-h-screen p-8">
-      <div className="mx-auto max-w-5xl space-y-6">
+      <div className="mx-auto max-w-4xl space-y-8">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link to="/app/dashboard">
@@ -70,7 +70,8 @@ export default function LogsPage() {
           </div>
         </div>
 
-        <section className="rounded-lg border border-border p-5 space-y-4">
+        <section className="space-y-4">
+          <h2 className="text-sm font-medium text-muted-foreground">Filters</h2>
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
             <div className="space-y-2">
               <Label htmlFor="log-method">Method</Label>
@@ -89,7 +90,10 @@ export default function LogsPage() {
               <Input id="log-status-max" placeholder="599" value={statusMax} onChange={(event) => { setStatusMax(event.target.value); setCursor(0); setCursorHistory([]) }} />
             </div>
           </div>
+        </section>
 
+        <section className="space-y-4">
+          <h2 className="text-sm font-medium text-muted-foreground">Request Logs</h2>
           {logsResult === undefined ? (
             <p className="text-sm text-muted-foreground">Loading logs...</p>
           ) : logs.length === 0 ? (
