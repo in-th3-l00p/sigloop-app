@@ -25,17 +25,17 @@ export function AgentIntegrationDocs() {
         </p>
         <div className="rounded-lg border border-border p-4 mt-3">
           <pre className="text-xs leading-relaxed overflow-x-auto">{`Agent                    Card Service               Chain
-  │                          │                         │
-  │── GET /v1/card/limits ──▶│                         │
-  │◀── limits, policies ────│                         │
-  │                          │                         │
-  │── POST /quote ──────────▶│ validate policies       │
-  │◀── { allowed: true } ───│                         │
-  │                          │                         │
-  │── POST /transactions ───▶│ enforce limits ────────▶│
-  │                          │ check balance           │── ZeroDev Kernel
-  │◀── { hash, status } ────│◀── tx receipt ──────────│
-  │                          │                         │`}</pre>
+  |                          |                         |
+  |-- GET /v1/card/limits -->|                         |
+  |<-- limits, policies ----|                         |
+  |                          |                         |
+  |-- POST /quote ---------->| validate policies       |
+  |<-- { allowed: true } ---|                         |
+  |                          |                         |
+  |-- POST /transactions --->| enforce limits -------->|
+  |                          | check balance           |-- ZeroDev Kernel
+  |<-- { hash, status } ----|<-- tx receipt -----------|
+  |                          |                         |`}</pre>
         </div>
       </DocSection>
 
@@ -85,129 +85,31 @@ export function AgentIntegrationDocs() {
         </div>
       </DocSection>
 
-      <DocSection title="Integration Types">
-        <DocSubSection title="Skill Packages">
-          <p className="text-sm text-muted-foreground">
-            Pre-built skill bundles that give agents structured context about their card:
-            identity, spending limits, policies, and the operational flow for making payments.
-            Available for Codex and OpenClaw platforms.
-          </p>
-          <p className="text-sm text-muted-foreground mt-2">
-            Skills are generated with card-specific context and downloaded as JSON artifacts.
-            They include instructions, tool references, and your custom agent configuration
-            (purpose, scope, behavior rules, escalation policy).
-          </p>
-          <CodeBlock title="Skill artifact structure">{`{
-  "kind": "sigloop-agent-skill",
-  "schemaVersion": 1,
-  "platform": "codex",
-  "cardContext": {
-    "name": "Trading Agent",
-    "status": "active",
-    "chain": "sepolia",
-    "limit": "500000000000000000",
-    "policies": [{ "type": "maxPerTx", "value": "100000000000000000" }]
-  },
-  "instructions": [
-    "Always read constraints first before sending transactions.",
-    "Use GET /v1/card/limits and GET /v1/card/policies before spend decisions.",
-    "For payments, call POST /v1/card/transactions/quote, then POST /v1/card/transactions.",
-    "Attach x-card-secret for every call."
-  ],
-  "api": {
-    "auth": { "header": "x-card-secret", "value": "sgl_..." },
-    "baseUrl": "http://localhost:8787",
-    "endpoints": [...]
-  }
-}`}</CodeBlock>
-        </DocSubSection>
-
-        <DocSubSection title="Library Integrations">
-          <p className="text-sm text-muted-foreground mb-4">
-            Helper libraries that wrap the Card Service API into tool sets native to
-            each agent framework. Install, configure environment variables, and use.
-          </p>
-
-          <div className="space-y-4">
-            <div className="rounded-lg border border-border p-4 space-y-3">
-              <div className="flex items-center gap-2">
-                <p className="text-sm font-medium">LangChain JS</p>
-                <Badge variant="outline" className="text-xs">@sigloop/langchain-card</Badge>
-              </div>
-              <CodeBlock title="Setup">{`npm i @sigloop/langchain-card`}</CodeBlock>
-              <CodeBlock title="Usage">{`import { createSigloopCardToolset } from "@sigloop/langchain-card"
-
-const tools = createSigloopCardToolset({
-  cardSecret: process.env.SIGLOOP_CARD_SECRET,
-  baseUrl: process.env.SIGLOOP_CARD_SERVICE_URL,
-})
-
-// Pass tools to your LangChain agent
-const agent = createReactAgent({ llm, tools })`}</CodeBlock>
+      <DocSection title="Integration Methods">
+        <p className="text-sm text-muted-foreground">
+          Choose the integration method that fits your agent framework. Use the sidebar
+          to explore each one in detail.
+        </p>
+        <div className="grid grid-cols-2 gap-3 mt-3">
+          {[
+            { title: "Skill Packages", desc: "Pre-built skill bundles for Codex and OpenClaw agents with card context." },
+            { title: "LangChain", desc: "JS and Python helper libraries that create native LangChain tool sets." },
+            { title: "ElizaOS", desc: "Plugin for ElizaOS agents with card action hooks." },
+            { title: "Direct API", desc: "Use the Card Service REST API directly from any HTTP client." },
+            { title: "Card SDK", desc: "TypeScript SDK with typed methods for all card operations." },
+            { title: "X402 Protocol", desc: "Automatic HTTP 402 payment detection and fulfillment." },
+          ].map((item) => (
+            <div key={item.title} className="rounded-lg border border-border p-4 space-y-1">
+              <p className="text-sm font-medium">{item.title}</p>
+              <p className="text-xs text-muted-foreground">{item.desc}</p>
             </div>
-
-            <div className="rounded-lg border border-border p-4 space-y-3">
-              <div className="flex items-center gap-2">
-                <p className="text-sm font-medium">LangChain Python</p>
-                <Badge variant="outline" className="text-xs">sigloop-langchain-card</Badge>
-              </div>
-              <CodeBlock title="Setup">{`pip install sigloop-langchain-card`}</CodeBlock>
-              <CodeBlock title="Usage">{`from sigloop_langchain import create_sigloop_card_tools
-
-tools = create_sigloop_card_tools(
-    card_secret=os.environ["SIGLOOP_CARD_SECRET"],
-    base_url=os.environ["SIGLOOP_CARD_SERVICE_URL"],
-)
-
-# Pass tools to your LangChain agent
-agent = create_react_agent(llm=llm, tools=tools)`}</CodeBlock>
-            </div>
-
-            <div className="rounded-lg border border-border p-4 space-y-3">
-              <div className="flex items-center gap-2">
-                <p className="text-sm font-medium">ElizaOS Plugin</p>
-                <Badge variant="outline" className="text-xs">@sigloop/eliza-card-plugin</Badge>
-              </div>
-              <CodeBlock title="Setup">{`npm i @sigloop/eliza-card-plugin`}</CodeBlock>
-              <CodeBlock title="Usage">{`import { sigloopCardPlugin } from "@sigloop/eliza-card-plugin"
-
-agent.use(sigloopCardPlugin({
-  cardSecret: process.env.SIGLOOP_CARD_SECRET,
-  baseUrl: process.env.SIGLOOP_CARD_SERVICE_URL,
-}))`}</CodeBlock>
-            </div>
-          </div>
-        </DocSubSection>
-
-        <DocSubSection title="Direct API Integration">
-          <p className="text-sm text-muted-foreground">
-            For custom agent frameworks or any HTTP client, use the Card Service API directly.
-            Set the card secret in the <code className="bg-muted px-1 py-0.5 rounded text-xs">x-card-secret</code> header.
-          </p>
-          <CodeBlock title="Environment Variables">{`SIGLOOP_CARD_SECRET=sgl_your_card_secret
-SIGLOOP_CARD_SERVICE_URL=http://localhost:8787`}</CodeBlock>
-          <CodeBlock title="curl">{`# Get card summary
-curl -s $SIGLOOP_CARD_SERVICE_URL/v1/card/summary \\
-  -H "x-card-secret: $SIGLOOP_CARD_SECRET"
-
-# Quote a transaction
-curl -s $SIGLOOP_CARD_SERVICE_URL/v1/card/transactions/quote \\
-  -H "x-card-secret: $SIGLOOP_CARD_SECRET" \\
-  -H "Content-Type: application/json" \\
-  -d '{"to":"0x5678...","value":"100000000000000"}'
-
-# Execute a transaction
-curl -s $SIGLOOP_CARD_SERVICE_URL/v1/card/transactions \\
-  -H "x-card-secret: $SIGLOOP_CARD_SECRET" \\
-  -H "Content-Type: application/json" \\
-  -H "idempotency-key: unique_key_123" \\
-  -d '{"to":"0x5678...","value":"100000000000000"}'`}</CodeBlock>
-        </DocSubSection>
+          ))}
+        </div>
       </DocSection>
 
       <DocSection title="Recommended Agent Flow">
         <p className="text-sm text-muted-foreground mb-3">
-          When building an agent that uses a Sigloop card, follow this operational pattern:
+          Regardless of integration method, follow this operational pattern:
         </p>
         <div className="space-y-2">
           {[
@@ -263,71 +165,6 @@ curl -s $SIGLOOP_CARD_SERVICE_URL/v1/card/transactions \\
             </tbody>
           </table>
         </div>
-      </DocSection>
-
-      <DocSection title="Using the Card SDK in Agents">
-        <p className="text-sm text-muted-foreground mb-3">
-          For TypeScript/JavaScript agents, the Card SDK provides a clean interface:
-        </p>
-        <CodeBlock title="Full agent payment flow">{`import { createCardClient, CardApiError } from "@sigloop/card-sdk"
-
-const card = createCardClient({
-  baseUrl: process.env.SIGLOOP_CARD_SERVICE_URL,
-  cardSecret: process.env.SIGLOOP_CARD_SECRET,
-})
-
-async function makePayment(to, valueWei, description) {
-  // 1. Check limits
-  const limits = await card.limits()
-  if (limits.remaining && BigInt(limits.remaining) < BigInt(valueWei)) {
-    return { ok: false, reason: "Exceeds remaining limit" }
-  }
-
-  // 2. Quote
-  const quote = await card.quoteTransaction({ to, value: valueWei, description })
-  if (!quote.allowed) {
-    return { ok: false, reason: "Transaction not allowed by policies" }
-  }
-
-  // 3. Execute
-  try {
-    const { transaction } = await card.createTransaction(
-      { to, value: valueWei, description },
-      { idempotencyKey: \`pay_\${Date.now()}\` },
-    )
-    return { ok: true, hash: transaction.hash, status: transaction.status }
-  } catch (error) {
-    if (error instanceof CardApiError) {
-      return { ok: false, reason: error.message, code: error.code }
-    }
-    throw error
-  }
-}`}</CodeBlock>
-      </DocSection>
-
-      <DocSection title="X402 Payment Protocol">
-        <p className="text-sm text-muted-foreground">
-          Sigloop supports the X402 payment automation pattern. When an agent encounters
-          an HTTP 402 (Payment Required) response from an external service, it can
-          automatically:
-        </p>
-        <div className="space-y-2 mt-3">
-          {[
-            "Detect the 402 response and parse payment requirements",
-            "Validate the payment amount against card limits and policies",
-            "Sign and submit the transaction via the Card Service",
-            "Retry the original request after successful payment",
-          ].map((step, i) => (
-            <div key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-              <span className="text-xs font-medium text-primary mt-0.5">{i + 1}.</span>
-              {step}
-            </div>
-          ))}
-        </div>
-        <p className="text-xs text-muted-foreground mt-3">
-          This enables agents to autonomously pay for API calls, data access, and compute
-          resources without developer intervention for each payment.
-        </p>
       </DocSection>
     </div>
   )

@@ -10,6 +10,12 @@ import { GeneralDocs } from "@/components/docs/general-docs"
 import { CardServiceDocs } from "@/components/docs/card-service-docs"
 import { CardSdkDocs } from "@/components/docs/card-sdk-docs"
 import { AgentIntegrationDocs } from "@/components/docs/agent-integration-docs"
+import { AgentSkillDocs } from "@/components/docs/agent-skill-docs"
+import { AgentLangchainDocs } from "@/components/docs/agent-langchain-docs"
+import { AgentElizaosDocs } from "@/components/docs/agent-elizaos-docs"
+import { AgentDirectApiDocs } from "@/components/docs/agent-direct-api-docs"
+import { AgentCardSdkDocs } from "@/components/docs/agent-card-sdk-docs"
+import { AgentX402Docs } from "@/components/docs/agent-x402-docs"
 import { ApiServiceDocs } from "@/components/docs/api-service-docs"
 import { ApiSdkDocs } from "@/components/docs/api-sdk-docs"
 
@@ -24,7 +30,20 @@ const SIDEBAR_ITEMS = [
       { id: "card-sdk", label: "SDK" },
     ],
   },
-  { id: "agent-integration", label: "AI Agent Integration", icon: Bot },
+  {
+    id: "agent",
+    label: "AI Agent Integration",
+    icon: Bot,
+    children: [
+      { id: "agent-overview", label: "Overview" },
+      { id: "agent-skills", label: "Skill Packages" },
+      { id: "agent-langchain", label: "LangChain" },
+      { id: "agent-elizaos", label: "ElizaOS" },
+      { id: "agent-direct-api", label: "Direct API" },
+      { id: "agent-card-sdk", label: "Card SDK" },
+      { id: "agent-x402", label: "X402 Protocol" },
+    ],
+  },
   {
     id: "api",
     label: "API Interaction",
@@ -175,8 +194,20 @@ function DocsContent({ section }) {
       return <CardServiceDocs />
     case "card-sdk":
       return <CardSdkDocs />
-    case "agent-integration":
+    case "agent-overview":
       return <AgentIntegrationDocs />
+    case "agent-skills":
+      return <AgentSkillDocs />
+    case "agent-langchain":
+      return <AgentLangchainDocs />
+    case "agent-elizaos":
+      return <AgentElizaosDocs />
+    case "agent-direct-api":
+      return <AgentDirectApiDocs />
+    case "agent-card-sdk":
+      return <AgentCardSdkDocs />
+    case "agent-x402":
+      return <AgentX402Docs />
     case "api-ref":
       return <ApiServiceDocs />
     case "api-sdk":
