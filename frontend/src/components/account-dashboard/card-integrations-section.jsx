@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react"
 import { useMutation, useQuery } from "convex/react"
 import { api } from "../../../convex/_generated/api"
-import { ExternalLink, Download, Copy, Check, Trash2 } from "lucide-react"
+import { ExternalLink, Download, Copy, Check, Trash2, BookOpen } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   Drawer,
@@ -16,10 +16,15 @@ import {
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard"
 import {
   CARD_SERVICE_BASE_URL,
+  CARD_SDK_DOCS_URL,
   getPresetById,
+  getSkillDocsByProduct,
+  getLangChainEnvTemplate,
+  getDirectApiEnvTemplate,
+  getDirectApiSnippet,
 } from "@/lib/integration-registry"
 import { CreateIntegrationDialog } from "./create-integration-dialog"
-import { downloadSkillArtifact, generateSkillArtifact } from "@/lib/skill-generator"
+import { downloadLangChainBundle, downloadSkillBundle } from "@/lib/integration-artifacts"
 import {
   Dialog,
   DialogContent,
@@ -55,6 +60,32 @@ function CopyBlock({ title, value, onAction }) {
   )
 }
 
+function resolveIntegrationText(preset, integration) {
+  const endpointBaseUrl = integration?.config?.endpointBaseUrl || CARD_SERVICE_BASE_URL
+
+  if (preset.type === "library") {
+    return {
+      env: getLangChainEnvTemplate(endpointBaseUrl),
+      install: "",
+      snippet: "",
+    }
+  }
+
+  if (preset.type === "api") {
+    return {
+      env: getDirectApiEnvTemplate(endpointBaseUrl),
+      install: "npm i undici",
+      snippet: getDirectApiSnippet(),
+    }
+  }
+
+  return {
+    env: "",
+    install: "",
+    snippet: "",
+  }
+}
+
 function IntegrationDrawerContent({
   integration,
   preset,
@@ -63,20 +94,51 @@ function IntegrationDrawerContent({
   onSetupInteraction,
   onRemove,
 }) {
-  const fullApiDocs = `${CARD_SERVICE_BASE_URL}/openapi.json`
   const [confirmOpen, setConfirmOpen] = useState(false)
+  const [isDownloading, setIsDownloading] = useState(false)
 
-  const handleSkillDownload = () => {
-    if (!cardSecret) return
-    const artifact = generateSkillArtifact({
-      preset,
-      integration,
-      cardSecret,
-      cardContext,
-      baseUrl: CARD_SERVICE_BASE_URL,
-    })
-    downloadSkillArtifact(artifact)
-    onSetupInteraction(integration._id)
+  const skillProduct = integration?.config?.skillProduct === "claude"
+    ? "claude"
+    : integration?.config?.skillProduct === "openclaw"
+      ? "openclaw"
+      : "codex"
+  const langchainLanguage = integration?.config?.language === "python" ? "python" : "javascript"
+  const skillDocs = integration.type === "skill" ? getSkillDocsByProduct(skillProduct) : null
+  const docsUrl = skillDocs?.url || preset.docsUrl
+  const docsLabel = skillDocs?.label || preset.docsLabel || "Docs"
+  const platformText = resolveIntegrationText(preset, integration)
+
+  const handleSkillDownload = async () => {
+    if (!cardSecret || isDownloading) return
+    setIsDownloading(true)
+    try {
+      await downloadSkillBundle({
+        skillProduct,
+        preset,
+        integration,
+        cardSecret,
+        cardContext,
+        baseUrl: integration?.config?.endpointBaseUrl || CARD_SERVICE_BASE_URL,
+      })
+      await onSetupInteraction(integration._id)
+    } finally {
+      setIsDownloading(false)
+    }
+  }
+
+  const handleLangChainDownload = async () => {
+    if (!cardSecret || isDownloading) return
+    setIsDownloading(true)
+    try {
+      await downloadLangChainBundle({
+        language: langchainLanguage,
+        cardSecret,
+        baseUrl: integration?.config?.endpointBaseUrl || CARD_SERVICE_BASE_URL,
+      })
+      await onSetupInteraction(integration._id)
+    } finally {
+      setIsDownloading(false)
+    }
   }
 
   return (
@@ -87,26 +149,80 @@ function IntegrationDrawerContent({
       </DrawerHeader>
 
       <div className="space-y-4 px-4 pb-2 overflow-y-auto">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <a href={docsUrl} target="_blank" rel="noopener noreferrer">
+            <Button variant="outline" size="sm" className="cursor-pointer gap-1.5">
+              <ExternalLink className="h-3.5 w-3.5" />
+              {docsLabel}
+            </Button>
+          </a>
+
           {integration.type === "api" && (
-            <a href={fullApiDocs} target="_blank" rel="noopener noreferrer">
+            <a href={CARD_SDK_DOCS_URL} target="_blank" rel="noopener noreferrer">
               <Button variant="outline" size="sm" className="cursor-pointer gap-1.5">
-                <ExternalLink className="h-3.5 w-3.5" />
-                Full API Docs
+                <BookOpen className="h-3.5 w-3.5" />
+                Card SDK Docs
               </Button>
             </a>
           )}
         </div>
 
+        <div className="space-y-2 rounded-md border border-border p-3">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">What Platform Does</p>
+          <ul className="space-y-1 text-xs text-muted-foreground">
+            {preset.platformActions.map((line) => (
+              <li key={line}>{line}</li>
+            ))}
+          </ul>
+        </div>
+
         {integration.type === "skill" && (
           <Button
             className="cursor-pointer gap-1.5"
-            disabled={!cardSecret}
+            disabled={!cardSecret || isDownloading}
             onClick={handleSkillDownload}
           >
             <Download className="h-3.5 w-3.5" />
-            Download Skill
+            {isDownloading ? "Preparing..." : "Download Skill Bundle"}
           </Button>
+        )}
+
+        {integration.type === "library" && (
+          <Button
+            className="cursor-pointer gap-1.5"
+            disabled={!cardSecret || isDownloading}
+            onClick={handleLangChainDownload}
+          >
+            <Download className="h-3.5 w-3.5" />
+            {isDownloading ? "Preparing..." : langchainLanguage === "python" ? "Download Python Tools File" : "Download LangChain Project"}
+          </Button>
+        )}
+
+        {integration.type === "library" && (
+          <div className="space-y-2 rounded-md border border-border p-3">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Exported API</p>
+            {langchainLanguage === "python" ? (
+              <>
+                <p className="text-xs text-muted-foreground">
+                  The file exports{" "}
+                  <code className="rounded bg-muted px-1 py-0.5">create_sigloop_wallet_tools(base_url, card_secret, timeout=30.0)</code>.
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  It returns LangChain tools for wallet metadata, balance, limits, policies, summary, transactions, quote, send, pause, and resume.
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="text-xs text-muted-foreground">
+                  The file exports{" "}
+                  <code className="rounded bg-muted px-1 py-0.5">createSigloopWalletTools({"{ baseUrl, cardSecret, timeoutMs }"})</code>.
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  It returns LangChain tools for wallet metadata, balance, limits, policies, summary, transactions, quote, send, pause, and resume.
+                </p>
+              </>
+            )}
+          </div>
         )}
 
         {integration.type === "api" && preset.curatedEndpoints?.length > 0 && (
@@ -125,26 +241,9 @@ function IntegrationDrawerContent({
           </div>
         )}
 
-        {integration.type !== "skill" && (
-          <CopyBlock title="Env" value={preset.envTemplate} onAction={() => onSetupInteraction(integration._id)} />
-        )}
-        <CopyBlock title="Install" value={preset.installCommand} onAction={() => onSetupInteraction(integration._id)} />
-        <CopyBlock title="Snippet" value={preset.snippet} onAction={() => onSetupInteraction(integration._id)} />
-
-        {integration.type === "skill" && (
-          <div className="space-y-2 rounded-md border border-border p-3">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              Information Given To Agent
-            </p>
-            <ul className="space-y-1 text-xs text-muted-foreground">
-              <li>Card identity: name, status, account address, chain.</li>
-              <li>Spending context: limit, spent, and active card policies.</li>
-              <li>Secure tool auth: x-card-secret for card-service API calls.</li>
-              <li>Operational flow: check limits/policies, quote, then execute tx.</li>
-              <li>Your customization: purpose, scope, behavior rules, escalation policy.</li>
-            </ul>
-          </div>
-        )}
+        {platformText.env ? <CopyBlock title="Env" value={platformText.env} onAction={() => onSetupInteraction(integration._id)} /> : null}
+        {platformText.install ? <CopyBlock title="Install" value={platformText.install} onAction={() => onSetupInteraction(integration._id)} /> : null}
+        {platformText.snippet ? <CopyBlock title="Snippet" value={platformText.snippet} onAction={() => onSetupInteraction(integration._id)} /> : null}
 
         {integration.verificationMessage && (
           <p className="text-xs text-muted-foreground">Last verification: {integration.verificationMessage}</p>
@@ -212,12 +311,12 @@ export function CardIntegrationsSection({ cardId, cardSecret, card, chain, accou
     : undefined
   const drawerPreset = selectedPreset ?? (selectedIntegration
     ? {
-        docsUrl: CARD_SERVICE_BASE_URL,
-        curatedEndpoints: [],
-        envTemplate: "",
-        installCommand: "",
-        snippet: "",
-      }
+      docsUrl: CARD_SERVICE_BASE_URL,
+      docsLabel: "Docs",
+      curatedEndpoints: [],
+      platformActions: [],
+      type: selectedIntegration.type,
+    }
     : null)
 
   const cardContext = {
@@ -229,10 +328,6 @@ export function CardIntegrationsSection({ cardId, cardSecret, card, chain, accou
     accountId: card?.accountId,
     chain,
     accountAddress,
-    agentPurpose: selectedIntegration?.config?.agentPurpose,
-    taskScope: selectedIntegration?.config?.taskScope,
-    behavioralRules: selectedIntegration?.config?.behavioralRules,
-    escalationPolicy: selectedIntegration?.config?.escalationPolicy,
   }
 
   const handleRemove = async (id) => {

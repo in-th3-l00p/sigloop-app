@@ -8,7 +8,7 @@ export function AgentSkillDocs() {
       <div>
         <div className="flex items-center gap-2">
           <h1 className="text-2xl font-bold tracking-tight">Skill Packages</h1>
-          <Badge variant="outline">Codex & OpenClaw</Badge>
+          <Badge variant="outline">Codex, Claude, OpenClaw</Badge>
         </div>
         <p className="text-muted-foreground mt-2">
           Pre-built skill bundles that give agents structured context about their card:
@@ -20,14 +20,18 @@ export function AgentSkillDocs() {
 
       <DocSection title="Overview">
         <p className="text-sm text-muted-foreground leading-relaxed">
-          Skills are generated with card-specific context and downloaded as JSON artifacts
-          from the dashboard. They include agent instructions, tool references, and your
+          Skills are generated with card-specific context and downloaded as ZIP bundles
+          from the dashboard. They include prompt instructions, manifests, and your
           custom configuration (purpose, scope, behavior rules, escalation policy).
         </p>
-        <div className="grid grid-cols-2 gap-3 mt-3">
+        <div className="grid grid-cols-3 gap-3 mt-3">
           <div className="rounded-lg border border-border p-3 space-y-1">
             <p className="text-sm font-medium">Codex Skill</p>
             <p className="text-xs text-muted-foreground">Skill package for OpenAI Codex agents</p>
+          </div>
+          <div className="rounded-lg border border-border p-3 space-y-1">
+            <p className="text-sm font-medium">Claude Skill</p>
+            <p className="text-xs text-muted-foreground">Skill bundle for Claude-oriented workflows</p>
           </div>
           <div className="rounded-lg border border-border p-3 space-y-1">
             <p className="text-sm font-medium">OpenClaw Skill</p>
@@ -40,10 +44,10 @@ export function AgentSkillDocs() {
         <div className="space-y-2">
           {[
             { step: "1", text: "Navigate to your card in the dashboard" },
-            { step: "2", text: "Open the Integrations section and add a Codex or OpenClaw integration" },
+            { step: "2", text: "Open Integrations and choose Codex, Claude, or OpenClaw skill" },
             { step: "3", text: "Configure agent purpose, task scope, behavioral rules, and escalation policy" },
-            { step: "4", text: "Click \"Download Skill\" to get the JSON artifact" },
-            { step: "5", text: "Load the artifact into your agent platform" },
+            { step: "4", text: "Click \"Download Skill Bundle\" to get the generated ZIP" },
+            { step: "5", text: "Load prompt/manifest files into your agent platform" },
           ].map((item) => (
             <div key={item.step} className="flex gap-3 rounded-lg border border-border p-3">
               <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary">
@@ -56,9 +60,7 @@ export function AgentSkillDocs() {
       </DocSection>
 
       <DocSection title="Artifact Structure">
-        <p className="text-sm text-muted-foreground mb-3">
-          The downloaded JSON file contains everything the agent needs to operate:
-        </p>
+        <p className="text-sm text-muted-foreground mb-3">The generated bundle contains everything the agent needs:</p>
         <CodeBlock title="Skill artifact">{`{
   "kind": "sigloop-agent-skill",
   "schemaVersion": 1,

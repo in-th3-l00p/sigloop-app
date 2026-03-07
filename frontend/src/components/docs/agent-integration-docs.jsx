@@ -92,9 +92,8 @@ export function AgentIntegrationDocs() {
         </p>
         <div className="grid grid-cols-2 gap-3 mt-3">
           {[
-            { title: "Skill Packages", desc: "Pre-built skill bundles for Codex and OpenClaw agents with card context." },
-            { title: "LangChain", desc: "JS and Python helper libraries that create native LangChain tool sets." },
-            { title: "ElizaOS", desc: "Plugin for ElizaOS agents with card action hooks." },
+            { title: "Skill Packages", desc: "Generated skill bundles for Codex, Claude, and OpenClaw with card context." },
+            { title: "LangChain", desc: "Downloadable JS/Python LangChain integration projects wired to Sigloop." },
             { title: "Direct API", desc: "Use the Card Service REST API directly from any HTTP client." },
             { title: "Card SDK", desc: "TypeScript SDK with typed methods for all card operations." },
             { title: "X402 Protocol", desc: "Automatic HTTP 402 payment detection and fulfillment." },

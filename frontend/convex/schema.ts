@@ -76,6 +76,7 @@ export default defineSchema({
     config: v.optional(v.object({
       secretRef: v.optional(v.string()),
       language: v.optional(v.string()),
+      skillProduct: v.optional(v.string()),
       packageManager: v.optional(v.string()),
       endpointBaseUrl: v.optional(v.string()),
       toolLibrary: v.optional(v.string()),

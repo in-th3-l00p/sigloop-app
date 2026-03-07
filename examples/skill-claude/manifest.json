@@ -1,0 +1,10 @@
+{
+  "kind": "sigloop-agent-skill",
+  "schemaVersion": 2,
+  "platform": "claude",
+  "toolContract": {
+    "baseUrl": "http://localhost:8787",
+    "authHeader": "x-card-secret",
+    "writeHeaders": ["idempotency-key"]
+  }
+}

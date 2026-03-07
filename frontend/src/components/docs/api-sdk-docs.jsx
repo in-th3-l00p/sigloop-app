@@ -204,7 +204,7 @@ const { integrations } = await api.listCardIntegrations(cardId)
 // Create an integration
 const { integration } = await api.createIntegration({
   cardId: "card_123",
-  presetId: "langchain-library-js",
+  presetId: "langchain-library",
   type: "library",
   platform: "langchain",
   name: "LangChain JS",
@@ -370,7 +370,7 @@ const { card } = await api.createCard({
 // 3. Attach an integration
 const { integration } = await api.createIntegration({
   cardId: card._id,
-  presetId: "langchain-library-js",
+  presetId: "langchain-library",
   type: "library",
   platform: "langchain",
   name: "LangChain Agent",

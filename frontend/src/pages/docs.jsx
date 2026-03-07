@@ -10,7 +10,6 @@ import { CardSdkDocs } from "@/components/docs/card-sdk-docs"
 import { AgentIntegrationDocs } from "@/components/docs/agent-integration-docs"
 import { AgentSkillDocs } from "@/components/docs/agent-skill-docs"
 import { AgentLangchainDocs } from "@/components/docs/agent-langchain-docs"
-import { AgentElizaosDocs } from "@/components/docs/agent-elizaos-docs"
 import { AgentDirectApiDocs } from "@/components/docs/agent-direct-api-docs"
 import { AgentCardSdkDocs } from "@/components/docs/agent-card-sdk-docs"
 import { AgentX402Docs } from "@/components/docs/agent-x402-docs"
@@ -36,7 +35,6 @@ const SIDEBAR_ITEMS = [
       { id: "agent-overview", label: "Overview" },
       { id: "agent-skills", label: "Skill Packages" },
       { id: "agent-langchain", label: "LangChain" },
-      { id: "agent-elizaos", label: "ElizaOS" },
       { id: "agent-direct-api", label: "Direct API" },
       { id: "agent-card-sdk", label: "Card SDK" },
       { id: "agent-x402", label: "X402 Protocol" },
@@ -187,8 +185,6 @@ function DocsContent({ section }) {
       return <AgentSkillDocs />
     case "agent-langchain":
       return <AgentLangchainDocs />
-    case "agent-elizaos":
-      return <AgentElizaosDocs />
     case "agent-direct-api":
       return <AgentDirectApiDocs />
     case "agent-card-sdk":

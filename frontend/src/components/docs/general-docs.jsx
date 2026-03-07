@@ -25,7 +25,7 @@ export function GeneralDocs() {
           {[
             { title: "Smart Accounts", desc: "ERC-4337 kernel accounts provisioned via ZeroDev. Each account has a unique on-chain address." },
             { title: "Agent Cards", desc: "Scoped spending permissions attached to an account. Each card has its own secret, limit, and policies." },
-            { title: "Integrations", desc: "Connect cards to agent frameworks like LangChain, ElizaOS, Codex, or direct API access." },
+            { title: "Integrations", desc: "Connect cards via Skill bundles (Codex/Claude/OpenClaw), LangChain (JS/Python), or Direct API." },
             { title: "API Keys", desc: "Scope-based keys (read, write, tx, admin) with rate limits and IP allowlists." },
           ].map((item) => (
             <div key={item.title} className="rounded-lg border border-border p-4 space-y-1">
@@ -151,7 +151,7 @@ export function GeneralDocs() {
           </DocSubSection>
           <DocSubSection title="3. Connect Your Agent">
             <p className="text-sm text-muted-foreground">
-              Add an integration to your card (LangChain, ElizaOS, Codex, or Direct API).
+              Add an integration to your card (Skill package, LangChain, or Direct API).
               Use the card secret to authenticate your agent against the Card Service.
             </p>
           </DocSubSection>

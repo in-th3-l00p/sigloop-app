@@ -1,0 +1,15 @@
+{
+  "kind": "sigloop-agent-skill",
+  "schemaVersion": 2,
+  "platform": "codex",
+  "toolContract": {
+    "baseUrl": "http://localhost:8787",
+    "authHeader": "x-card-secret",
+    "endpoints": [
+      "GET /v1/card/me",
+      "GET /v1/card/summary",
+      "POST /v1/card/transactions/quote",
+      "POST /v1/card/transactions"
+    ]
+  }
+}

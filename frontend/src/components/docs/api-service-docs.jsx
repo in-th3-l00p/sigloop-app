@@ -318,7 +318,7 @@ Header: idempotency-key: unique_key_per_intent`}
               description="Create a new integration for a card."
               body={`{
   "cardId": "card_123",
-  "presetId": "langchain-library-js",
+  "presetId": "langchain-library",
   "type": "library",
   "platform": "langchain",
   "name": "LangChain JS",

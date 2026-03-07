@@ -1,0 +1,9 @@
+{
+  "kind": "sigloop-agent-skill",
+  "schemaVersion": 2,
+  "platform": "openclaw",
+  "toolContract": {
+    "baseUrl": "http://localhost:8787",
+    "authHeader": "x-card-secret"
+  }
+}

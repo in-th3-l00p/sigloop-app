@@ -3,7 +3,6 @@ import { useMutation } from "convex/react"
 import { api } from "../../../convex/_generated/api"
 import { Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
   Dialog,
@@ -21,9 +20,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { CARD_SERVICE_BASE_URL, INTEGRATION_PRESETS, getPresetById } from "@/lib/integration-registry"
+import {
+  CARD_SERVICE_BASE_URL,
+  INTEGRATION_PRESETS,
+  getPresetById,
+  getSkillProductOptions,
+} from "@/lib/integration-registry"
 
-const STEP_TITLES = ["Template", "Customize", "Review"]
+const STEP_TITLES = ["Template", "Personalize", "Review"]
 
 function StepHeader({ step }) {
   return (
@@ -42,20 +46,23 @@ function StepHeader({ step }) {
   )
 }
 
+function titleFromSelection(preset, language, skillProduct) {
+  if (preset.id === "langchain") {
+    return `Langchain (${language === "python" ? "Python" : "JavaScript"})`
+  }
+  if (preset.id === "skill") {
+    const label = skillProduct === "claude" ? "Claude" : skillProduct === "openclaw" ? "OpenClaw" : "Codex"
+    return `Skill (${label})`
+  }
+  return "Direct api"
+}
+
 export function CreateIntegrationDialog({ cardId }) {
   const [open, setOpen] = useState(false)
   const [step, setStep] = useState(0)
   const [selectedPresetId, setSelectedPresetId] = useState("")
-  const [name, setName] = useState("")
-  const [description, setDescription] = useState("")
   const [language, setLanguage] = useState("javascript")
-  const [packageManager, setPackageManager] = useState("npm")
-  const [endpointBaseUrl, setEndpointBaseUrl] = useState(CARD_SERVICE_BASE_URL)
-  const [toolLibrary, setToolLibrary] = useState("")
-  const [agentPurpose, setAgentPurpose] = useState("")
-  const [taskScope, setTaskScope] = useState("")
-  const [behavioralRules, setBehavioralRules] = useState("")
-  const [escalationPolicy, setEscalationPolicy] = useState("")
+  const [skillProduct, setSkillProduct] = useState("codex")
   const [isCreating, setIsCreating] = useState(false)
 
   const createFromPreset = useMutation(api.integrations.integrations.createFromPreset)
@@ -68,59 +75,32 @@ export function CreateIntegrationDialog({ cardId }) {
   const reset = () => {
     setStep(0)
     setSelectedPresetId("")
-    setName("")
-    setDescription("")
     setLanguage("javascript")
-    setPackageManager("npm")
-    setEndpointBaseUrl(CARD_SERVICE_BASE_URL)
-    setToolLibrary("")
-    setAgentPurpose("")
-    setTaskScope("")
-    setBehavioralRules("")
-    setEscalationPolicy("")
+    setSkillProduct("codex")
     setIsCreating(false)
   }
 
-  const selectPreset = (presetId) => {
-    const preset = getPresetById(presetId)
-    setSelectedPresetId(presetId)
-    if (preset) {
-      setName(preset.name)
-      setDescription(preset.description)
-      setToolLibrary(preset.platform)
-    }
-  }
-
-  const canNext =
-    step === 0
-      ? Boolean(selectedPresetId)
-      : step === 1
-        ? Boolean(name.trim() && description.trim())
-        : true
+  const canNext = step === 0 ? Boolean(selectedPresetId) : true
 
   const handleCreate = async () => {
     if (!selectedPreset) return
 
     setIsCreating(true)
     try {
+      const name = titleFromSelection(selectedPreset, language, skillProduct)
       await createFromPreset({
         cardId,
         presetId: selectedPreset.id,
         type: selectedPreset.type,
         platform: selectedPreset.platform,
-        name: name.trim(),
-        description: description.trim(),
+        name,
+        description: selectedPreset.description,
         schemaVersion: selectedPreset.schemaVersion,
         config: {
           secretRef: `card_secret:${cardId}`,
-          language: selectedPreset.type === "library" ? language : undefined,
-          packageManager: selectedPreset.type === "library" ? packageManager : undefined,
-          endpointBaseUrl,
-          toolLibrary: toolLibrary || selectedPreset.platform,
-          agentPurpose: selectedPreset.type === "skill" ? agentPurpose : undefined,
-          taskScope: selectedPreset.type === "skill" ? taskScope : undefined,
-          behavioralRules: selectedPreset.type === "skill" ? behavioralRules : undefined,
-          escalationPolicy: selectedPreset.type === "skill" ? escalationPolicy : undefined,
+          endpointBaseUrl: CARD_SERVICE_BASE_URL,
+          language: selectedPreset.id === "langchain" ? language : undefined,
+          skillProduct: selectedPreset.id === "skill" ? skillProduct : undefined,
         },
       })
       setOpen(false)
@@ -148,19 +128,19 @@ export function CreateIntegrationDialog({ cardId }) {
         <DialogHeader>
           <DialogTitle>Create Integration</DialogTitle>
           <DialogDescription>
-            Walk through setup and customize how this card integrates with your agent platform.
+            Choose one integration template, then personalize only the required generator option.
           </DialogDescription>
         </DialogHeader>
 
         <StepHeader step={step} />
 
         {step === 0 && (
-          <div className="grid gap-2 sm:grid-cols-2">
+          <div className="grid gap-2 sm:grid-cols-3">
             {INTEGRATION_PRESETS.map((preset) => (
               <button
                 key={preset.id}
                 type="button"
-                onClick={() => selectPreset(preset.id)}
+                onClick={() => setSelectedPresetId(preset.id)}
                 className={`cursor-pointer rounded-md border p-3 text-left ${
                   selectedPresetId === preset.id
                     ? "border-primary bg-primary/5"
@@ -176,92 +156,41 @@ export function CreateIntegrationDialog({ cardId }) {
 
         {step === 1 && selectedPreset && (
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Name</Label>
-              <Input value={name} onChange={(e) => setName(e.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <Label>Description</Label>
-              <Input value={description} onChange={(e) => setDescription(e.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <Label>Endpoint Base URL</Label>
-              <Input value={endpointBaseUrl} onChange={(e) => setEndpointBaseUrl(e.target.value)} />
-            </div>
-
-            {selectedPreset.type === "library" && (
-              <>
-                <div className="space-y-2">
-                  <Label>Language</Label>
-                  <Select value={language} onValueChange={setLanguage}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="javascript">JavaScript</SelectItem>
-                      <SelectItem value="python">Python</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Package Manager</Label>
-                  <Select value={packageManager} onValueChange={setPackageManager}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="npm">npm</SelectItem>
-                      <SelectItem value="pnpm">pnpm</SelectItem>
-                      <SelectItem value="yarn">yarn</SelectItem>
-                      <SelectItem value="pip">pip</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </>
-            )}
-
-            {(selectedPreset.type === "skill" || selectedPreset.type === "library") && (
+            {selectedPreset.id === "langchain" && (
               <div className="space-y-2">
-                <Label>Tool Library Identifier</Label>
-                <Input value={toolLibrary} onChange={(e) => setToolLibrary(e.target.value)} />
+                <Label>Language</Label>
+                <Select value={language} onValueChange={setLanguage}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="javascript">JavaScript</SelectItem>
+                    <SelectItem value="python">Python</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             )}
 
-            {selectedPreset.type === "skill" && (
-              <>
-                <div className="space-y-2">
-                  <Label>Agent Purpose</Label>
-                  <Input
-                    placeholder="e.g. Execute low-value rebalancing trades"
-                    value={agentPurpose}
-                    onChange={(e) => setAgentPurpose(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Task Scope</Label>
-                  <Input
-                    placeholder="e.g. Swap only approved tokens and recipients"
-                    value={taskScope}
-                    onChange={(e) => setTaskScope(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Behavior Rules</Label>
-                  <Input
-                    placeholder="e.g. Always quote first, never bypass policy checks"
-                    value={behavioralRules}
-                    onChange={(e) => setBehavioralRules(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Escalation Policy</Label>
-                  <Input
-                    placeholder="e.g. If error twice, stop and ask human approval"
-                    value={escalationPolicy}
-                    onChange={(e) => setEscalationPolicy(e.target.value)}
-                  />
-                </div>
-              </>
+            {selectedPreset.id === "skill" && (
+              <div className="space-y-2">
+                <Label>Product</Label>
+                <Select value={skillProduct} onValueChange={setSkillProduct}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {getSkillProductOptions().map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {selectedPreset.id === "direct-api" && (
+              <p className="text-sm text-muted-foreground">
+                Direct api does not require personalization. It will expose env vars, examples, and docs links.
+              </p>
             )}
           </div>
         )}
@@ -272,64 +201,22 @@ export function CreateIntegrationDialog({ cardId }) {
               <span className="text-muted-foreground">Template</span>
               <span>{selectedPreset.name}</span>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Type</span>
-              <span>{selectedPreset.type}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Platform</span>
-              <span>{selectedPreset.platform}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Name</span>
-              <span>{name}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Description</span>
-              <span className="text-right max-w-[60%]">{description}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Endpoint</span>
-              <span className="text-right max-w-[60%] truncate">{endpointBaseUrl}</span>
-            </div>
-            {selectedPreset.type === "library" && (
-              <>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Language</span>
-                  <span>{language}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Package Manager</span>
-                  <span>{packageManager}</span>
-                </div>
-              </>
-            )}
-            {(selectedPreset.type === "skill" || selectedPreset.type === "library") && (
+            {selectedPreset.id === "langchain" && (
               <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Tool Library</span>
-                <span>{toolLibrary || selectedPreset.platform}</span>
+                <span className="text-muted-foreground">Language</span>
+                <span>{language === "python" ? "Python" : "JavaScript"}</span>
               </div>
             )}
-            {selectedPreset.type === "skill" && (
-              <>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Agent Purpose</span>
-                  <span className="text-right max-w-[60%]">{agentPurpose || "Not set"}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Task Scope</span>
-                  <span className="text-right max-w-[60%]">{taskScope || "Not set"}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Behavior Rules</span>
-                  <span className="text-right max-w-[60%]">{behavioralRules || "Not set"}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Escalation Policy</span>
-                  <span className="text-right max-w-[60%]">{escalationPolicy || "Not set"}</span>
-                </div>
-              </>
+            {selectedPreset.id === "skill" && (
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Product</span>
+                <span>{skillProduct === "claude" ? "Claude" : skillProduct === "openclaw" ? "OpenClaw" : "Codex"}</span>
+              </div>
             )}
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Generated Name</span>
+              <span>{titleFromSelection(selectedPreset, language, skillProduct)}</span>
+            </div>
           </div>
         )}
 
