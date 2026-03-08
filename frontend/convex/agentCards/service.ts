@@ -5,6 +5,47 @@ function normalizeAddress(address: string) {
   return address.trim().toLowerCase()
 }
 
+async function mirrorIncomingForRecipients(
+  ctx: any,
+  args: {
+    sourceAccountId: any
+    hash: string
+    from: string
+    to: string
+    value: string
+    status: "progress" | "success" | "error"
+    chain: string
+  }
+) {
+  const recipientAddress = normalizeAddress(args.to)
+  const accounts = await ctx.db.query("smartAccounts").collect()
+  const recipientAccounts = accounts.filter((item: any) =>
+    item._id !== args.sourceAccountId && normalizeAddress(item.address) === recipientAddress
+  )
+
+  for (const recipient of recipientAccounts) {
+    const recipientTxs = await ctx.db
+      .query("transactions")
+      .withIndex("by_account", (q: any) => q.eq("accountId", recipient._id))
+      .collect()
+    const existingIncoming = recipientTxs.find((item: any) => item.hash === args.hash && item.direction === "in")
+    if (existingIncoming) continue
+
+    await ctx.db.insert("transactions", {
+      userId: recipient.userId,
+      accountId: recipient._id,
+      hash: args.hash,
+      from: args.from,
+      to: args.to,
+      value: args.value,
+      direction: "in",
+      status: args.status,
+      chain: args.chain,
+      createdAt: Date.now(),
+    })
+  }
+}
+
 function computeNextResetAt(period?: string): number | undefined {
   if (!period) return undefined
 
@@ -220,6 +261,18 @@ export const upsertCardTransactionBySecret = mutation({
       createdAt: Date.now(),
     })
 
+    if (args.direction === "out") {
+      await mirrorIncomingForRecipients(ctx, {
+        sourceAccountId: card.accountId,
+        hash: args.hash,
+        from: args.from,
+        to: args.to,
+        value: args.value,
+        status: args.status,
+        chain: args.chain,
+      })
+    }
+
     await ctx.db.patch(card._id, {
       spent: (spentBefore + value).toString(),
       ...(resetPatch ?? {}),
@@ -298,6 +351,16 @@ export const prepareCardTransactionBySecret = mutation({
       createdAt: Date.now(),
     })
 
+    await mirrorIncomingForRecipients(ctx, {
+      sourceAccountId: card.accountId,
+      hash: `pending:${args.idempotencyKey}`,
+      from: account.address,
+      to: args.to,
+      value: args.value,
+      status: "progress",
+      chain: account.chain,
+    })
+
     await ctx.db.patch(card._id, {
       spent: (spentBefore + amount).toString(),
       ...(resetPatch ?? {}),
@@ -337,10 +400,26 @@ export const finalizePreparedCardTransactionBySecret = mutation({
       return tx
     }
 
+    const previousHash = tx.hash
+
     await ctx.db.patch(tx._id, {
       hash: args.hash,
       status: args.status,
     })
+
+    const sameHashTxs = await ctx.db.query("transactions").collect()
+    const mirrors = sameHashTxs.filter((item: any) =>
+      item._id !== tx._id &&
+      item.hash === previousHash &&
+      item.status !== "success" &&
+      item.status !== "error"
+    )
+    for (const mirror of mirrors) {
+      await ctx.db.patch(mirror._id, {
+        hash: args.hash,
+        status: args.status,
+      })
+    }
 
     if (args.status === "error") {
       const nextSpent = BigInt(card.spent || "0") - BigInt(tx.value || "0")
@@ -382,6 +461,17 @@ export const setCardTransactionStatusBySecret = mutation({
     }
 
     await ctx.db.patch(tx._id, { status: args.status })
+
+    const sameHashTxs = await ctx.db.query("transactions").collect()
+    const mirrors = sameHashTxs.filter((item: any) =>
+      item._id !== tx._id &&
+      item.hash === tx.hash &&
+      item.status !== "success" &&
+      item.status !== "error"
+    )
+    for (const mirror of mirrors) {
+      await ctx.db.patch(mirror._id, { status: args.status })
+    }
 
     if (args.status === "error") {
       const nextSpent = BigInt(card.spent || "0") - BigInt(tx.value || "0")

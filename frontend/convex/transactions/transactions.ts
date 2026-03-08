@@ -8,6 +8,10 @@ const txStatus = v.union(
   v.literal("error")
 )
 
+function normalizeAddress(value: string) {
+  return value.trim().toLowerCase()
+}
+
 export const create = mutation({
   args: {
     accountId: v.id("smartAccounts"),
@@ -25,7 +29,7 @@ export const create = mutation({
     if (!account || account.userId !== userId) {
       throw new Error("Account not found")
     }
-    return ctx.db.insert("transactions", {
+    const txId = await ctx.db.insert("transactions", {
       userId,
       accountId: args.accountId,
       hash: args.hash,
@@ -37,6 +41,38 @@ export const create = mutation({
       chain: args.chain,
       createdAt: Date.now(),
     })
+
+    if (args.direction === "out") {
+      const recipientAddress = normalizeAddress(args.to)
+      const accounts = await ctx.db.query("smartAccounts").collect()
+      const recipientAccounts = accounts.filter((item) =>
+        item._id !== args.accountId && normalizeAddress(item.address) === recipientAddress
+      )
+
+      for (const recipient of recipientAccounts) {
+        const recipientTxs = await ctx.db
+          .query("transactions")
+          .withIndex("by_account", (q) => q.eq("accountId", recipient._id))
+          .collect()
+        const existingIncoming = recipientTxs.find((item) => item.hash === args.hash && item.direction === "in")
+        if (existingIncoming) continue
+
+        await ctx.db.insert("transactions", {
+          userId: recipient.userId,
+          accountId: recipient._id,
+          hash: args.hash,
+          from: args.from,
+          to: args.to,
+          value: args.value,
+          direction: "in",
+          status: args.status,
+          chain: args.chain,
+          createdAt: Date.now(),
+        })
+      }
+    }
+
+    return txId
   },
 })
 
@@ -55,6 +91,19 @@ export const updateStatus = mutation({
       return tx
     }
     await ctx.db.patch(args.id, { status: args.status })
+
+    const sameHashTxs = await ctx.db.query("transactions").collect()
+    const mirrorTxs = sameHashTxs.filter((item) =>
+      item.hash === tx.hash &&
+      item._id !== args.id &&
+      item.status !== "success" &&
+      item.status !== "error"
+    )
+
+    for (const mirror of mirrorTxs) {
+      await ctx.db.patch(mirror._id, { status: args.status })
+    }
+
     return { ...tx, status: args.status }
   },
 })

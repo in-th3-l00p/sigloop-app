@@ -56,6 +56,10 @@ function computeResetAt(period: string): number {
   return 0
 }
 
+function normalizeAddressForMatch(value: string): string {
+  return value.trim().toLowerCase()
+}
+
 export const authorizeApiRequest = mutation({
   args: {
     apiKey: v.string(),
@@ -452,6 +456,36 @@ export const createTransaction = mutation({
       createdAt: Date.now(),
     })
 
+    if (args.direction === "out") {
+      const recipientAddress = normalizeAddressForMatch(args.to)
+      const accounts = await ctx.db.query("smartAccounts").collect()
+      const recipientAccounts = accounts.filter((item: any) =>
+        item._id !== args.accountId && normalizeAddressForMatch(item.address) === recipientAddress
+      )
+
+      for (const recipient of recipientAccounts) {
+        const recipientTxs = await ctx.db
+          .query("transactions")
+          .withIndex("by_account", (q: any) => q.eq("accountId", recipient._id))
+          .collect()
+        const existingIncoming = recipientTxs.find((item: any) => item.hash === args.hash && item.direction === "in")
+        if (existingIncoming) continue
+
+        await ctx.db.insert("transactions", {
+          userId: recipient.userId,
+          accountId: recipient._id,
+          hash: args.hash,
+          from: args.from,
+          to: args.to,
+          value: args.value,
+          direction: "in",
+          status: args.status,
+          chain: args.chain,
+          createdAt: Date.now(),
+        })
+      }
+    }
+
     return ctx.db.get(id)
   },
 })
@@ -472,6 +506,19 @@ export const updateTransactionStatus = mutation({
     }
 
     await ctx.db.patch(args.transactionId, { status: args.status })
+
+    const sameHashTxs = await ctx.db.query("transactions").collect()
+    const mirrors = sameHashTxs.filter((item: any) =>
+      item.hash === tx.hash &&
+      item._id !== args.transactionId &&
+      item.status !== "success" &&
+      item.status !== "error"
+    )
+
+    for (const mirror of mirrors) {
+      await ctx.db.patch(mirror._id, { status: args.status })
+    }
+
     return { ...tx, status: args.status }
   },
 })
