@@ -10,8 +10,19 @@ The container exposes one port (`8080`) and proxies internal services under path
 
 ## 1. Build
 
+The frontend needs build-time Vite env vars:
+- `VITE_CONVEX_URL`
+- `VITE_PRIVY_APP_ID`
+
+Optional build arg:
+- `VITE_CARD_SERVICE_URL` (defaults to `/card-service`)
+
 ```bash
-docker build -t sigloop-app:prod .
+docker build -t sigloop-app:prod \
+  --build-arg VITE_CONVEX_URL="https://<your-convex>.convex.cloud" \
+  --build-arg VITE_PRIVY_APP_ID="<your-privy-app-id>" \
+  --build-arg VITE_CARD_SERVICE_URL="/card-service" \
+  .
 ```
 
 ## 2. Run
@@ -31,7 +42,7 @@ docker run -d \
 - API service: `http://localhost:8080/api-service/*`
 - Container health: `http://localhost:8080/health`
 
-## 4. Required Environment Variables
+## 4. Runtime Env Vars (Docker Run)
 
 You must provide:
 
@@ -59,7 +70,34 @@ You can also provide:
   - Used by `card-service` background tx tracking.
   - Default: `120000`
 
-## 6. Quick Verification
+## 6. Full Env Variable Inventory (From Project Sources)
+
+These vars are referenced in the repo; not all are required for production Docker run:
+
+- Build-time frontend:
+  - `VITE_CONVEX_URL`
+  - `VITE_PRIVY_APP_ID`
+  - `VITE_CARD_SERVICE_URL`
+- Runtime services:
+  - `CONVEX_URL` (required)
+  - `ZERODEV_PROJECT_ID`
+  - `SEPOLIA_RPC_URL`
+  - `BASE_SEPOLIA_RPC_URL`
+  - `TX_RETRY_WINDOW_MS`
+  - `PORT` (set internally by Supervisor in the container)
+- SDK/examples/docs usage:
+  - `SIGLOOP_API_KEY`
+  - `SIGLOOP_CARD_SECRET`
+  - `SIGLOOP_CARD_SERVICE_URL`
+- Integration test-only:
+  - `RUN_INTEGRATION_TESTS`
+  - `CARD_SERVICE_BASE_URL`
+  - `CARD_SERVICE_TEST_SECRET`
+  - `API_SERVICE_BASE_URL`
+  - `API_SERVICE_TEST_KEY`
+  - `PRIVY_APP_ID`
+
+## 7. Quick Verification
 
 ```bash
 curl -s http://localhost:8080/health
@@ -72,7 +110,7 @@ Expected responses:
 - `{"ok":true,"service":"card-service"}`
 - `{"ok":true,"service":"api-service"}`
 
-## 7. Stop / Remove
+## 8. Stop / Remove
 
 ```bash
 docker rm -f sigloop-app

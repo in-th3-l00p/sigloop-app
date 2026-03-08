@@ -21,7 +21,11 @@ COPY frontend/package*.json ./
 RUN npm install --no-audit --no-fund
 COPY frontend ./
 ARG VITE_CARD_SERVICE_URL=/card-service
+ARG VITE_CONVEX_URL
+ARG VITE_PRIVY_APP_ID
 ENV VITE_CARD_SERVICE_URL=${VITE_CARD_SERVICE_URL}
+ENV VITE_CONVEX_URL=${VITE_CONVEX_URL}
+ENV VITE_PRIVY_APP_ID=${VITE_PRIVY_APP_ID}
 RUN npm run build
 
 FROM node:22-bookworm-slim AS runtime
