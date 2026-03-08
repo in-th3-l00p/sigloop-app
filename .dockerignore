@@ -1,0 +1,9 @@
+.git
+.vite
+**/node_modules
+**/dist
+**/.DS_Store
+**/.env
+**/.env.*
+examples
+packages
