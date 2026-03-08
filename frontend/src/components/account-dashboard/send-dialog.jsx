@@ -61,19 +61,26 @@ export function SendDialog({ account }) {
         chain: account.chain,
       })
 
-      const finalStatus = await finalizeProgressTransaction({
-        chainSlug: account.chain,
-        privateKey: accountWithKey.privateKey,
-        txHash: result.txHash,
-      })
-      await updateTxStatus({
-        id: txId,
-        status: finalStatus,
-      })
-
+      // Close immediately after submission; finality is tracked in background.
       setTo("")
       setAmount("")
       setOpen(false)
+
+      void (async () => {
+        try {
+          const finalStatus = await finalizeProgressTransaction({
+            chainSlug: account.chain,
+            privateKey: accountWithKey.privateKey,
+            txHash: result.txHash,
+          })
+          await updateTxStatus({
+            id: txId,
+            status: finalStatus,
+          })
+        } catch {
+          // If background finality tracking fails, keep the transaction as progress.
+        }
+      })()
     } catch (err) {
       setError(err.message ?? "Transaction failed")
     } finally {
