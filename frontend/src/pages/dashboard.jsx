@@ -69,7 +69,7 @@ function AccountSection() {
 const QUICK_ACCESS_ITEMS = [
   { to: "/app/api", label: "API Access", icon: KeyRound, desc: "Manage keys" },
   { to: "/app/docs", label: "Docs", icon: BookOpen, desc: "Documentation" },
-  { to: "/app/stats", label: "Stats", icon: Activity, desc: "API usage" },
+  { to: "/app/stats", label: "Stats", icon: Activity, desc: "App usage" },
   { to: "/app/logs", label: "Logs", icon: FileText, desc: "Request logs" },
 ]
 
