@@ -19,6 +19,23 @@ spec:
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 80
+          env:
+            - name: VITE_CONVEX_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: sigloop-config
+                  key: VITE_CONVEX_URL
+            - name: VITE_CARD_SERVICE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: sigloop-config
+                  key: VITE_CARD_SERVICE_URL
+            - name: VITE_PRIVY_APP_ID
+              valueFrom:
+                secretKeyRef:
+                  name: sigloop-secrets
+                  key: PRIVY_APP_ID
+                  optional: true
           readinessProbe:
             httpGet:
               path: /app/
@@ -31,4 +48,3 @@ spec:
               port: 80
             initialDelaySeconds: 15
             periodSeconds: 20
-

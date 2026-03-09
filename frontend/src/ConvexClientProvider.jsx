@@ -1,8 +1,11 @@
 import { useCallback, useMemo } from "react"
 import { ConvexProviderWithAuth, ConvexReactClient } from "convex/react"
 import { PrivyProvider, usePrivy } from "@privy-io/react-auth"
+import { getConfigValue, getRequiredAbsoluteUrl } from "@/lib/runtime-config"
 
-const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL)
+const convexUrl = getRequiredAbsoluteUrl("VITE_CONVEX_URL", import.meta.env.VITE_CONVEX_URL)
+const privyAppId = getConfigValue("VITE_PRIVY_APP_ID", import.meta.env.VITE_PRIVY_APP_ID)
+const convex = new ConvexReactClient(convexUrl)
 
 function useAuthFromPrivy() {
   const { ready, authenticated, getAccessToken } = usePrivy()
@@ -60,7 +63,7 @@ function useAuthFromPrivy() {
 export default function ConvexClientProvider({ children }) {
   return (
     <PrivyProvider
-      appId={import.meta.env.VITE_PRIVY_APP_ID}
+      appId={privyAppId}
       config={{
         appearance: {
           theme: "dark",

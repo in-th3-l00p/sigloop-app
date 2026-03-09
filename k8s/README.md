@@ -38,7 +38,12 @@ Update these files before deploy:
 - `k8s/base/ingress-web.yaml` -> `host: sigloop.local`
 - `k8s/base/ingress-api.yaml` -> `host: sigloop.local`
 - `k8s/base/deployment-*.yaml` -> container `image` values
-- `k8s/base/configmap.yaml` -> `CONVEX_URL` and any overrides
+- `k8s/base/configmap.yaml` -> `CONVEX_URL`, `VITE_CONVEX_URL` and any overrides
+
+Important:
+
+- `VITE_CONVEX_URL` must be an absolute URL (for example `https://<deployment>.convex.cloud`).
+- If this is empty or relative, the webapp throws: `Provided address was not an absolute URL.`
 
 ## 3) Deploy
 
@@ -55,4 +60,3 @@ kubectl get ingress -n sigloop
 ```
 
 If using local testing with `/etc/hosts`, map your ingress LB IP to `sigloop.local`.
-

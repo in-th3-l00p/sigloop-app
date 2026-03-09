@@ -16,7 +16,9 @@ export type IntegrationPreset = {
 }
 
 export const CARD_SERVICE_BASE_URL =
-  import.meta.env.VITE_CARD_SERVICE_URL || "/api/card-service"
+  (typeof window !== "undefined" && (window as any).__SIGLOOP_CONFIG__?.VITE_CARD_SERVICE_URL)
+  || import.meta.env.VITE_CARD_SERVICE_URL
+  || "/api/card-service"
 
 export const CARD_SDK_DOCS_URL = "/docs?section=card-sdk"
 
