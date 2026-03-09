@@ -1,0 +1,26 @@
+---
+import { fade } from "astro:transitions";
+import { Button } from "@/components/ui/button";
+---
+
+<section
+	id="hero"
+	class="relative w-full h-screen flex flex-col items-center justify-center overflow-hidden"
+	transition:animate={fade({ duration: "0.6s" })}
+>
+	<div
+		class="absolute inset-0 -z-20 bg-cover bg-center bg-no-repeat opacity-15"
+		style="background-image: url('/landscape-large.png');"
+		aria-hidden="true"
+	></div>
+	<div class="h-40 w-full absolute bottom-0 left-0 bg-gradient-to-b from-white/0 to-white"></div>
+	
+	<img src="/logo.png" alt="sigloop logo" class="invert w-32" />
+	<h1 class="text-6xl font-semibold mt-6">sigloop</h1>
+	<h2 class="text-lg mt-3">wallets for agents that pay</h2>
+
+	<div class="grid grid-cols-2 mt-6 gap-3">
+		<a href="/whitepaper.pdf"><Button>whitepaper</Button></a>
+		<a href="#introduction"><Button variant="outline">learn more</Button></a>
+	</div>
+</section>

@@ -1,0 +1,39 @@
+---
+import "../styles/global.css";
+import { ClientRouter } from "astro:transitions";
+import DevBanner from "@/components/DevBanner.astro";
+import Hero from "@/components/Hero.astro";
+import Introduction from "@/components/Introduction.astro";
+import About from "@/components/About.astro";
+import Cta from "@/components/Cta.astro";
+import Footer from "@/components/Footer.astro";
+---
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/png" href="/logo.png" />
+		<link rel="apple-touch-icon" href="/logo.png" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="generator" content={Astro.generator} />
+		<meta name="description" content="wallet abstraction for AI agents — session keys, scoped permissions, and native x402 payment automation." />
+		<meta property="og:title" content="sigloop" />
+		<meta property="og:description" content="wallet abstraction for AI agents — session keys, scoped permissions, and native x402 payment automation." />
+		<meta property="og:image" content="/logo.png" />
+		<meta property="og:type" content="website" />
+		<meta name="twitter:card" content="summary" />
+		<meta name="twitter:title" content="sigloop" />
+		<meta name="twitter:description" content="wallets for agents that pay" />
+		<meta name="twitter:image" content="/logo.png" />
+		<title>✧ sigloop ✧</title>
+		<ClientRouter />
+	</head>
+	<body class="flex flex-col min-h-screen">
+		<DevBanner />
+		<Hero />
+		<Introduction />
+		<About />
+		<Cta />
+		<Footer />
+	</body>
+</html>

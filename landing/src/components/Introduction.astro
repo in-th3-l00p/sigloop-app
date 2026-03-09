@@ -1,0 +1,63 @@
+---
+import { fade } from "astro:transitions";
+---
+
+<section id="introduction" class="mx-auto max-w-7xl pt-48 px-6 lg:px-8" transition:animate={fade({ duration: "0.6s" })}>
+	<div class="mx-auto max-w-2xl lg:max-w-none">
+		<div class="text-center">
+			<p class="text-sm font-semibold text-violet-600 tracking-wide uppercase">built on ERC-4337</p>
+			<h2
+				class="mt-2 text-4xl font-semibold tracking-tight text-balance text-zinc-900 sm:text-5xl"
+			>
+				the payment layer<br/> the agentic web needs
+			</h2>
+			<p class="mt-4 text-lg/8 text-zinc-600">
+				giving AI agents smart contract wallets with safety limitations<br>with session keys, scoped permissions, and native x402 payment automation
+			</p>
+		</div>
+		<dl
+			class="mt-16 grid grid-cols-1 gap-0.5 overflow-hidden rounded-2xl text-center sm:grid-cols-2 lg:grid-cols-4"
+		>
+			<div class="flex flex-col p-8">
+				<dt class="text-sm/6 font-semibold text-zinc-600">
+					ERC-4337 smart accounts with time-bound, contract-scoped permissions that can be revoked instantly
+				</dt>
+				<dd
+					class="order-first text-3xl font-semibold tracking-tight text-zinc-900"
+				>
+					session keys
+				</dd>
+			</div>
+			<div class="flex flex-col p-8">
+				<dt class="text-sm/6 font-semibold text-zinc-600">
+					agents detect 402 responses, validate budgets, sign UserOps, and retry automatically
+				</dt>
+				<dd
+					class="order-first text-3xl font-semibold tracking-tight text-zinc-900"
+				>
+					x402 payments
+				</dd>
+			</div>
+			<div class="flex flex-col p-8">
+				<dt class="text-sm/6 font-semibold text-zinc-600">
+					ERC-4337 account abstraction eliminates seed phrases; onboard with passkeys alone
+				</dt>
+				<dd
+					class="order-first text-3xl font-semibold tracking-tight text-zinc-900"
+				>
+					passkey onboarding
+				</dd>
+			</div>
+			<div class="flex flex-col p-8">
+				<dt class="text-sm/6 font-semibold text-zinc-600">
+					per-agent spending limits, token allowlists, and real-time audit logs enforced on-chain
+				</dt>
+				<dd
+					class="order-first text-3xl font-semibold tracking-tight text-zinc-900"
+				>
+					budget guardrails
+				</dd>
+			</div>
+		</dl>
+	</div>
+</section>
