@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sigloop-config
+  namespace: sigloop
+data:
+  CONVEX_URL: "https://your-convex-deployment.convex.cloud"
+  ZERODEV_PROJECT_ID: "00f42aaa-bd75-486b-ad15-851fd20d6177"
+  SEPOLIA_RPC_URL: "https://rpc.sepolia.org"
+  BASE_SEPOLIA_RPC_URL: "https://sepolia.base.org"
+  TX_RETRY_WINDOW_MS: "120000"
+

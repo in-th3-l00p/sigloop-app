@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: card-service
+  namespace: sigloop
+spec:
+  selector:
+    app: card-service
+  ports:
+    - name: http
+      port: 8787
+      targetPort: 8787
+

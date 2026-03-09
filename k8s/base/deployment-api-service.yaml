@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-service
+  namespace: sigloop
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api-service
+  template:
+    metadata:
+      labels:
+        app: api-service
+    spec:
+      containers:
+        - name: api-service
+          image: ghcr.io/your-org/sigloop-api-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8788
+          env:
+            - name: PORT
+              value: "8788"
+            - name: CONVEX_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: sigloop-config
+                  key: CONVEX_URL
+            - name: SEPOLIA_RPC_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: sigloop-config
+                  key: SEPOLIA_RPC_URL
+            - name: BASE_SEPOLIA_RPC_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: sigloop-config
+                  key: BASE_SEPOLIA_RPC_URL
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8788
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8788
+            initialDelaySeconds: 15
+            periodSeconds: 20
+

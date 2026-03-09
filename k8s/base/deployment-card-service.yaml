@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: card-service
+  namespace: sigloop
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: card-service
+  template:
+    metadata:
+      labels:
+        app: card-service
+    spec:
+      containers:
+        - name: card-service
+          image: ghcr.io/your-org/sigloop-card-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8787
+          env:
+            - name: PORT
+              value: "8787"
+            - name: CONVEX_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: sigloop-config
+                  key: CONVEX_URL
+            - name: ZERODEV_PROJECT_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: sigloop-config
+                  key: ZERODEV_PROJECT_ID
+            - name: TX_RETRY_WINDOW_MS
+              valueFrom:
+                configMapKeyRef:
+                  name: sigloop-config
+                  key: TX_RETRY_WINDOW_MS
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8787
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8787
+            initialDelaySeconds: 15
+            periodSeconds: 20
+
