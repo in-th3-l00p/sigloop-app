@@ -1,6 +1,7 @@
 ---
 import { fade } from "astro:transitions";
 import { Button } from "@/components/ui/button";
+import { APP_URL } from "@/lib/links";
 ---
 
 <section id="cta" class="mt-48" transition:animate={fade({ duration: "0.6s" })}>
@@ -10,7 +11,7 @@ import { Button } from "@/components/ui/button";
 			<h2 class="mt-2 text-4xl font-semibold tracking-tight text-balance text-zinc-900 sm:text-5xl">learn more</h2>
 			<p class="mx-auto mt-6 max-w-xl text-lg/8 text-pretty text-zinc-600">session keys, scoped permissions & native x402 payment automation,<br>the modern abstraction of web3 for a better user experience and security</p>
 			<div class="mt-10 flex items-center justify-center gap-x-4">
-				<a href="/app"><Button>open app</Button></a>
+				<a href={APP_URL}><Button>open app</Button></a>
 				<a href="/whitepaper.pdf"><Button variant="outline">whitepaper <span aria-hidden="true">→</span></Button></a>
 			</div>
 		</div>
