@@ -70,7 +70,7 @@ export function GeneralDocs() {
             This scopes the agent to only that card's balance, limits, and policies.
           </p>
           <CodeBlock title="Card Service Auth">{`curl -H "x-card-secret: sgl_your_card_secret" \\
-  http://localhost:8787/v1/card/me`}</CodeBlock>
+  http://localhost:8080/api/card-service/v1/card/me`}</CodeBlock>
         </DocSubSection>
         <DocSubSection title="API Service (x-api-key)">
           <p className="text-sm text-muted-foreground">
@@ -78,7 +78,7 @@ export function GeneralDocs() {
             in the <code className="text-xs bg-muted px-1 py-0.5 rounded">x-api-key</code> header.
           </p>
           <CodeBlock title="API Service Auth">{`curl -H "x-api-key: your_api_key" \\
-  http://localhost:8788/v1/accounts`}</CodeBlock>
+  http://localhost:8080/api/api-service/v1/accounts`}</CodeBlock>
         </DocSubSection>
       </DocSection>
 

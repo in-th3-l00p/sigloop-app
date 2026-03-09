@@ -3,7 +3,7 @@
   "schemaVersion": 2,
   "platform": "claude",
   "toolContract": {
-    "baseUrl": "http://localhost:8787",
+    "baseUrl": "http://localhost:8080/api/card-service",
     "authHeader": "x-card-secret",
     "writeHeaders": ["idempotency-key"]
   }

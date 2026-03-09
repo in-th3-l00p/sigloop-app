@@ -19,7 +19,7 @@ export function ApiServiceDocs() {
       <Separator />
 
       <DocSection title="Base URL">
-        <CodeBlock>{`http://localhost:8788`}</CodeBlock>
+        <CodeBlock>{`http://localhost:8080/api/api-service`}</CodeBlock>
       </DocSection>
 
       <DocSection title="Authentication">

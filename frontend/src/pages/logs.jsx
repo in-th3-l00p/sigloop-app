@@ -42,7 +42,7 @@ export default function LogsPage() {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/app" replace />
+    return <Navigate to="/" replace />
   }
 
   const logs = logsResult?.items ?? []
@@ -52,7 +52,7 @@ export default function LogsPage() {
       <div className="mx-auto max-w-4xl space-y-8">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link to="/app/dashboard">
+            <Link to="/dashboard">
               <Button variant="ghost" size="icon-sm" className="cursor-pointer">
                 <ArrowLeft className="h-4 w-4" />
               </Button>

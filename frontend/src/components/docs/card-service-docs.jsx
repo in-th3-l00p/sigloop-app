@@ -19,7 +19,7 @@ export function CardServiceDocs() {
       <Separator />
 
       <DocSection title="Base URL">
-        <CodeBlock>{`http://localhost:8787`}</CodeBlock>
+        <CodeBlock>{`http://localhost:8080/api/card-service`}</CodeBlock>
         <p className="text-xs text-muted-foreground mt-2">
           Set via <code className="bg-muted px-1 py-0.5 rounded">VITE_CARD_SERVICE_URL</code> environment variable.
         </p>

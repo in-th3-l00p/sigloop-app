@@ -26,7 +26,7 @@ export function ApiSdkDocs() {
         <CodeBlock title="JavaScript">{`import { createApiClient } from "@sigloop/api-sdk"
 
 const api = createApiClient({
-  baseUrl: "http://localhost:8788",
+  baseUrl: "http://localhost:8080/api/api-service",
   apiKey: "your_api_key",
 })
 
@@ -326,7 +326,7 @@ try {
           Use hooks for logging, metrics, or custom header injection.
         </p>
         <CodeBlock title="JavaScript">{`const api = createApiClient({
-  baseUrl: "http://localhost:8788",
+  baseUrl: "http://localhost:8080/api/api-service",
   apiKey: "your_key",
   beforeRequest: (ctx) => {
     // ctx: { path, method, url, headers }
@@ -345,7 +345,7 @@ try {
         <CodeBlock title="JavaScript">{`import { createApiClient } from "@sigloop/api-sdk"
 
 const api = createApiClient({
-  baseUrl: "http://localhost:8788",
+  baseUrl: "http://localhost:8080/api/api-service",
   apiKey: process.env.SIGLOOP_API_KEY,
 })
 

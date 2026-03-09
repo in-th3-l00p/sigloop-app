@@ -26,7 +26,7 @@ export function CardSdkDocs() {
         <CodeBlock title="JavaScript">{`import { createCardClient } from "@sigloop/card-sdk"
 
 const card = createCardClient({
-  baseUrl: "http://localhost:8787",
+  baseUrl: "http://localhost:8080/api/card-service",
   cardSecret: "sgl_your_card_secret",
 })
 
@@ -262,7 +262,7 @@ try {
           Use hooks for logging, metrics, or custom header injection.
         </p>
         <CodeBlock title="JavaScript">{`const card = createCardClient({
-  baseUrl: "http://localhost:8787",
+  baseUrl: "http://localhost:8080/api/card-service",
   cardSecret: "sgl_...",
   beforeRequest: (ctx) => {
     // ctx: { path, method, url, headers }

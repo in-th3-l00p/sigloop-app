@@ -9,7 +9,7 @@ import App from "./App.jsx"
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <ThemeProvider defaultTheme="dark" storageKey="sigloop-theme">
-      <BrowserRouter>
+      <BrowserRouter basename={import.meta.env.BASE_URL}>
         <ConvexClientProvider>
           <App />
         </ConvexClientProvider>

@@ -16,9 +16,9 @@ export type IntegrationPreset = {
 }
 
 export const CARD_SERVICE_BASE_URL =
-  import.meta.env.VITE_CARD_SERVICE_URL || "http://localhost:8787"
+  import.meta.env.VITE_CARD_SERVICE_URL || "/api/card-service"
 
-export const CARD_SDK_DOCS_URL = "/app/docs?section=card-sdk"
+export const CARD_SDK_DOCS_URL = "/docs?section=card-sdk"
 
 export const INTEGRATION_PRESETS: IntegrationPreset[] = [
   {

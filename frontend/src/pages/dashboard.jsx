@@ -67,10 +67,10 @@ function AccountSection() {
 }
 
 const QUICK_ACCESS_ITEMS = [
-  { to: "/app/api", label: "API Access", icon: KeyRound, desc: "Manage keys" },
-  { to: "/app/docs", label: "Docs", icon: BookOpen, desc: "Documentation" },
-  { to: "/app/stats", label: "Stats", icon: Activity, desc: "App usage" },
-  { to: "/app/logs", label: "Logs", icon: FileText, desc: "Request logs" },
+  { to: "/api", label: "API Access", icon: KeyRound, desc: "Manage keys" },
+  { to: "/docs", label: "Docs", icon: BookOpen, desc: "Documentation" },
+  { to: "/stats", label: "Stats", icon: Activity, desc: "App usage" },
+  { to: "/logs", label: "Logs", icon: FileText, desc: "Request logs" },
 ]
 
 function QuickAccessSection() {
@@ -110,7 +110,7 @@ function ApiUsageSection() {
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-medium text-muted-foreground">API Usage (7 days)</h2>
-        <Link to="/app/stats">
+        <Link to="/stats">
           <Button variant="ghost" size="sm" className="cursor-pointer text-xs text-muted-foreground">
             View details
           </Button>
@@ -148,7 +148,7 @@ export default function DashboardPage() {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/app" replace />
+    return <Navigate to="/" replace />
   }
 
   return (

@@ -104,7 +104,7 @@ export function AgentSkillDocs() {
   ],
   "api": {
     "auth": { "header": "x-card-secret", "value": "sgl_..." },
-    "baseUrl": "http://localhost:8787",
+    "baseUrl": "http://localhost:8080/api/card-service",
     "endpoints": [
       { "method": "GET",  "path": "/v1/card/me",                 "purpose": "Profile" },
       { "method": "GET",  "path": "/v1/card/balance",            "purpose": "Live balance" },

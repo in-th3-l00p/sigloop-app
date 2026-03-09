@@ -50,7 +50,7 @@ export function AgentCardsSection({ account }) {
           {cards.map((card) => (
             <Link
               key={card._id}
-              to={`/app/dashboard/${account._id}/card/${card._id}`}
+              to={`/dashboard/${account._id}/card/${card._id}`}
             >
               <AgentCardVisual card={card} />
             </Link>

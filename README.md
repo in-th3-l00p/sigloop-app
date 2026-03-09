@@ -15,13 +15,13 @@ The frontend needs build-time Vite env vars:
 - `VITE_PRIVY_APP_ID`
 
 Optional build arg:
-- `VITE_CARD_SERVICE_URL` (defaults to `/card-service`)
+- `VITE_CARD_SERVICE_URL` (defaults to `/api/card-service`)
 
 ```bash
 docker build -t sigloop-app:prod \
   --build-arg VITE_CONVEX_URL="https://<your-convex>.convex.cloud" \
   --build-arg VITE_PRIVY_APP_ID="<your-privy-app-id>" \
-  --build-arg VITE_CARD_SERVICE_URL="/card-service" \
+  --build-arg VITE_CARD_SERVICE_URL="/api/card-service" \
   .
 ```
 
@@ -37,9 +37,10 @@ docker run -d \
 
 ## 3. Routes
 
+- Landing (Astro): `http://localhost:8080/landing/`
 - Frontend: `http://localhost:8080/`
-- Card service: `http://localhost:8080/card-service/*`
-- API service: `http://localhost:8080/api-service/*`
+- Card service: `http://localhost:8080/api/card-service/*`
+- API service: `http://localhost:8080/api/api-service/*`
 - Container health: `http://localhost:8080/health`
 
 ## 4. Runtime Env Vars (Docker Run)
@@ -101,8 +102,8 @@ These vars are referenced in the repo; not all are required for production Docke
 
 ```bash
 curl -s http://localhost:8080/health
-curl -s http://localhost:8080/card-service/health
-curl -s http://localhost:8080/api-service/health
+curl -s http://localhost:8080/api/card-service/health
+curl -s http://localhost:8080/api/api-service/health
 ```
 
 Expected responses:

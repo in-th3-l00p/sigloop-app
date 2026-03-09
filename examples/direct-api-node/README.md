@@ -6,4 +6,4 @@ cp .env.example .env.local
 npm start
 ```
 
-Card SDK docs: `/app/docs?section=card-sdk`
+Card SDK docs: `/docs?section=card-sdk`

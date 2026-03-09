@@ -29,7 +29,7 @@ export function AgentLangchainDocs() {
 
         <DocSubSection title="Environment Variables">
           <CodeBlock title=".env">{`SIGLOOP_CARD_SECRET=sgl_your_card_secret
-SIGLOOP_CARD_SERVICE_URL=http://localhost:8787`}</CodeBlock>
+SIGLOOP_CARD_SERVICE_URL=http://localhost:8080/api/card-service`}</CodeBlock>
         </DocSubSection>
 
         <DocSubSection title="Usage">
@@ -119,7 +119,7 @@ const result = await agent.invoke({
 
         <DocSubSection title="Environment Variables">
           <CodeBlock title=".env">{`SIGLOOP_CARD_SECRET=sgl_your_card_secret
-SIGLOOP_CARD_SERVICE_URL=http://localhost:8787`}</CodeBlock>
+SIGLOOP_CARD_SERVICE_URL=http://localhost:8080/api/card-service`}</CodeBlock>
         </DocSubSection>
 
         <DocSubSection title="Usage">

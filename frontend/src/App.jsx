@@ -18,15 +18,23 @@ function App() {
 
   return (
     <Routes>
-      <Route path="/app" element={<LoginPage />} />
-      <Route path="/app/dashboard" element={<DashboardPage />} />
-      <Route path="/app/api" element={<ApiDashboardPage />} />
-      <Route path="/app/docs" element={<DocsPage />} />
-      <Route path="/app/stats" element={<StatsPage />} />
-      <Route path="/app/logs" element={<LogsPage />} />
-      <Route path="/app/dashboard/:accountId" element={<AccountDashboardPage />} />
-      <Route path="/app/dashboard/:accountId/card/:cardId" element={<CardDashboardPage />} />
-      <Route path="*" element={<Navigate to="/app" replace />} />
+      <Route path="/app" element={<Navigate to="/" replace />} />
+      <Route path="/app/dashboard" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/app/api" element={<Navigate to="/api" replace />} />
+      <Route path="/app/docs" element={<Navigate to="/docs" replace />} />
+      <Route path="/app/stats" element={<Navigate to="/stats" replace />} />
+      <Route path="/app/logs" element={<Navigate to="/logs" replace />} />
+      <Route path="/app/dashboard/:accountId" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/app/dashboard/:accountId/card/:cardId" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/" element={<LoginPage />} />
+      <Route path="/dashboard" element={<DashboardPage />} />
+      <Route path="/api" element={<ApiDashboardPage />} />
+      <Route path="/docs" element={<DocsPage />} />
+      <Route path="/stats" element={<StatsPage />} />
+      <Route path="/logs" element={<LogsPage />} />
+      <Route path="/dashboard/:accountId" element={<AccountDashboardPage />} />
+      <Route path="/dashboard/:accountId/card/:cardId" element={<CardDashboardPage />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )
 }

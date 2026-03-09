@@ -218,13 +218,13 @@ export default function DocsPage() {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/app" replace />
+    return <Navigate to="/" replace />
   }
 
   return (
     <div className="min-h-screen">
       <header className="fixed top-0 left-0 right-0 z-10 flex h-14 items-center justify-between border-b border-border bg-background px-4">
-        <Link to="/app/dashboard">
+        <Link to="/dashboard">
           <Button variant="ghost" size="sm" className="cursor-pointer gap-1.5">
             <ArrowLeft className="h-3.5 w-3.5" />
             Dashboard

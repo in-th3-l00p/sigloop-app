@@ -85,7 +85,7 @@ export default function CardDashboardPage() {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/app" replace />
+    return <Navigate to="/" replace />
   }
 
   if (card === undefined) {
@@ -97,10 +97,10 @@ export default function CardDashboardPage() {
   }
 
   if (card === null) {
-    return <Navigate to={`/app/dashboard/${accountId}`} replace />
+    return <Navigate to={`/dashboard/${accountId}`} replace />
   }
 
-  const backPath = `/app/dashboard/${accountId}`
+  const backPath = `/dashboard/${accountId}`
 
   return (
     <div className="min-h-screen p-8">

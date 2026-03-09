@@ -2,7 +2,7 @@ import "dotenv/config"
 import { createCardClient } from "@sigloop/card"
 
 const card = createCardClient({
-  baseUrl: process.env.CARD_BASE_URL ?? "http://localhost:8787",
+  baseUrl: process.env.CARD_BASE_URL ?? "http://localhost:8080/api/card-service",
   cardSecret: process.env.CARD_SECRET ?? "sgl_81edeecc-4f5d-44a5-881a-3d44ee01440a",
 })
 

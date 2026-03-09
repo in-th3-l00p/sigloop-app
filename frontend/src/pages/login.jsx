@@ -17,7 +17,7 @@ export default function LoginPage() {
   }
 
   if (isAuthenticated) {
-    return <Navigate to="/app/dashboard" replace />
+    return <Navigate to="/dashboard" replace />
   }
 
   return (

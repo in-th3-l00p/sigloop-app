@@ -59,7 +59,7 @@ function AccountCard({ account }) {
 
   return (
     <Link
-      to={`/app/dashboard/${account._id}`}
+      to={`/dashboard/${account._id}`}
       className="flex items-center gap-3 rounded-lg border border-border p-3 text-left transition-colors hover:bg-accent/50 cursor-pointer w-full"
     >
       <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">

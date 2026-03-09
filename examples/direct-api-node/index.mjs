@@ -4,7 +4,7 @@ import { fetch } from "undici"
 dotenv.config({ path: new URL(".env.local", import.meta.url).pathname, quiet: true })
 dotenv.config({ quiet: true })
 
-const baseUrl = process.env.SIGLOOP_CARD_SERVICE_URL ?? "http://localhost:8787"
+const baseUrl = process.env.SIGLOOP_CARD_SERVICE_URL ?? "http://localhost:8080/api/card-service"
 const cardSecret = process.env.SIGLOOP_CARD_SECRET
 
 async function req(path, init = {}) {
