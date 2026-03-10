@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { CARD_SERVICE_BASE_URL } from "@/lib/integration-registry"
+import { CARD_SERVICE_BASE_URL } from "@/lib/service-urls"
 import { CodeBlock, DocSection, DocSubSection, EndpointBlock } from "./code-block"
 
 export function CardServiceDocs() {

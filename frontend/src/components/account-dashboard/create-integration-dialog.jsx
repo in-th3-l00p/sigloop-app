@@ -21,11 +21,11 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import {
-  CARD_SERVICE_BASE_URL,
   INTEGRATION_PRESETS,
   getPresetById,
   getSkillProductOptions,
 } from "@/lib/integration-registry"
+import { CARD_SERVICE_BASE_URL } from "@/lib/service-urls"
 
 const STEP_TITLES = ["Template", "Personalize", "Review"]
 

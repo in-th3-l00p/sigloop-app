@@ -15,7 +15,6 @@ import {
 } from "@/components/ui/drawer"
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard"
 import {
-  CARD_SERVICE_BASE_URL,
   CARD_SDK_DOCS_URL,
   getPresetById,
   getSkillDocsByProduct,
@@ -23,6 +22,7 @@ import {
   getDirectApiEnvTemplate,
   getDirectApiSnippet,
 } from "@/lib/integration-registry"
+import { CARD_SERVICE_BASE_URL } from "@/lib/service-urls"
 import { CreateIntegrationDialog } from "./create-integration-dialog"
 import { downloadLangChainBundle, downloadSkillBundle } from "@/lib/integration-artifacts"
 import {
@@ -115,7 +115,6 @@ function IntegrationDrawerContent({
       await downloadSkillBundle({
         skillProduct,
         preset,
-        integration,
         cardSecret,
         cardContext,
         baseUrl: integration?.config?.endpointBaseUrl || CARD_SERVICE_BASE_URL,

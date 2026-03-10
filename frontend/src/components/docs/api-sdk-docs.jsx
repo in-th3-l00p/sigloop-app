@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { API_SERVICE_BASE_URL } from "@/lib/integration-registry"
+import { API_SERVICE_BASE_URL } from "@/lib/service-urls"
 import { CodeBlock, DocSection, DocSubSection } from "./code-block"
 
 export function ApiSdkDocs() {

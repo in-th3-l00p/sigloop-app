@@ -179,7 +179,7 @@ function buildSkillInstructions(product: SkillProduct, cardContext: CardContext,
   ].join("\n")
 }
 
-function buildSkillReadme(product: SkillProduct, integration: IntegrationLike, baseUrl: string) {
+function buildSkillReadme(product: SkillProduct, baseUrl: string) {
   const platformName =
     product === "openclaw"
       ? "OpenClaw"
@@ -189,10 +189,6 @@ function buildSkillReadme(product: SkillProduct, integration: IntegrationLike, b
 
   return [
     `# Sigloop ${platformName} Card Skill`,
-    "",
-    `Integration: ${integration.name}`,
-    "",
-    integration.description,
     "",
     "This bundle contains:",
     "- `prompt/SKILL.md`: product-specific agent instructions",
@@ -252,24 +248,16 @@ function buildSkillExamples(cardSecret: string, baseUrl: string) {
 function buildSkillManifest(params: {
   product: SkillProduct
   preset: IntegrationPreset
-  integration: IntegrationLike
   cardContext: CardContext
   baseUrl: string
 }) {
-  const { product, preset, integration, cardContext, baseUrl } = params
+  const { product, preset, cardContext, baseUrl } = params
 
   return {
     kind: "sigloop-agent-skill",
     schemaVersion: preset.schemaVersion,
     generatedAt: new Date().toISOString(),
     product,
-    integration: {
-      id: integration._id,
-      name: integration.name,
-      description: integration.description,
-      type: integration.type,
-      platform: integration.platform,
-    },
     wallet: {
       name: cardContext.name,
       status: cardContext.status,
@@ -310,18 +298,17 @@ function buildSkillManifest(params: {
 function buildSkillFiles(params: {
   product: SkillProduct
   preset: IntegrationPreset
-  integration: IntegrationLike
   cardSecret: string
   cardContext: CardContext
   baseUrl: string
 }) {
-  const { product, preset, integration, cardSecret, cardContext, baseUrl } = params
-  const manifest = buildSkillManifest({ product, preset, integration, cardContext, baseUrl })
+  const { product, preset, cardSecret, cardContext, baseUrl } = params
+  const manifest = buildSkillManifest({ product, preset, cardContext, baseUrl })
 
   return [
     {
       path: "README.md",
-      content: buildSkillReadme(product, integration, baseUrl),
+      content: buildSkillReadme(product, baseUrl),
     },
     {
       path: "prompt/SKILL.md",
@@ -708,7 +695,6 @@ function buildLangChainFiles(params: {
 export async function downloadSkillBundle(params: {
   skillProduct: SkillProduct
   preset: IntegrationPreset
-  integration: IntegrationLike
   cardSecret: string
   cardContext: CardContext
   baseUrl: string

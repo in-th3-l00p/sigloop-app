@@ -1,12 +1,5 @@
 import type { IntegrationPreset } from "@/lib/integration-registry"
 
-type IntegrationItem = {
-  name: string
-  description: string
-  platform: string
-  type: string
-}
-
 type CardContext = {
   name?: string
   status?: string
@@ -24,12 +17,11 @@ type CardContext = {
 
 export function generateSkillArtifact(params: {
   preset: IntegrationPreset
-  integration: IntegrationItem
   cardSecret: string
   cardContext: CardContext
   baseUrl: string
 }): { filename: string; content: string; mimeType: string } {
-  const { preset, integration, cardSecret, cardContext, baseUrl } = params
+  const { preset, cardSecret, cardContext, baseUrl } = params
 
   const instructions = [
     "You are an agent with controlled wallet access through a Sigloop card.",
@@ -83,11 +75,6 @@ export function generateSkillArtifact(params: {
     schemaVersion: 1,
     generatedAt: new Date().toISOString(),
     platform: preset.platform,
-    integration: {
-      name: integration.name,
-      description: integration.description,
-      type: integration.type,
-    },
     cardContext: {
       name: cardContext.name,
       status: cardContext.status,
