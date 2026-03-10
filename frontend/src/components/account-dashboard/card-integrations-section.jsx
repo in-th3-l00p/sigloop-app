@@ -134,6 +134,7 @@ function IntegrationDrawerContent({
         language: langchainLanguage,
         cardSecret,
         baseUrl: integration?.config?.endpointBaseUrl || CARD_SERVICE_BASE_URL,
+        cardContext,
       })
       await onSetupInteraction(integration._id)
     } finally {
@@ -194,7 +195,7 @@ function IntegrationDrawerContent({
             onClick={handleLangChainDownload}
           >
             <Download className="h-3.5 w-3.5" />
-            {isDownloading ? "Preparing..." : langchainLanguage === "python" ? "Download Python Tools File" : "Download LangChain Project"}
+            {isDownloading ? "Preparing..." : `Download ${langchainLanguage === "python" ? "Python" : "JavaScript"} LangChain Bundle`}
           </Button>
         )}
 

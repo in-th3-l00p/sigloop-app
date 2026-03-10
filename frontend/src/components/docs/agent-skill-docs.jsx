@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+import { CARD_SERVICE_BASE_URL } from "@/lib/integration-registry"
 import { CodeBlock, DocSection, DocSubSection } from "./code-block"
 
 export function AgentSkillDocs() {
@@ -104,7 +105,7 @@ export function AgentSkillDocs() {
   ],
   "api": {
     "auth": { "header": "x-card-secret", "value": "sgl_..." },
-    "baseUrl": "http://localhost:8080/api/card-service",
+    "baseUrl": "${CARD_SERVICE_BASE_URL}",
     "endpoints": [
       { "method": "GET",  "path": "/v1/card/me",                 "purpose": "Profile" },
       { "method": "GET",  "path": "/v1/card/balance",            "purpose": "Live balance" },

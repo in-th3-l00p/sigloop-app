@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+import { CARD_SERVICE_BASE_URL } from "@/lib/integration-registry"
 import { CodeBlock, DocSection, DocSubSection } from "./code-block"
 
 export function AgentDirectApiDocs() {
@@ -20,7 +21,7 @@ export function AgentDirectApiDocs() {
 
       <DocSection title="Environment Variables">
         <CodeBlock title=".env">{`SIGLOOP_CARD_SECRET=sgl_your_card_secret
-SIGLOOP_CARD_SERVICE_URL=http://localhost:8080/api/card-service`}</CodeBlock>
+SIGLOOP_CARD_SERVICE_URL=${CARD_SERVICE_BASE_URL}`}</CodeBlock>
       </DocSection>
 
       <DocSection title="Authentication">

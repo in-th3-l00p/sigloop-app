@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+import { API_SERVICE_BASE_URL } from "@/lib/integration-registry"
 import { CodeBlock, DocSection, DocSubSection } from "./code-block"
 
 export function ApiSdkDocs() {
@@ -26,7 +27,7 @@ export function ApiSdkDocs() {
         <CodeBlock title="JavaScript">{`import { createApiClient } from "@sigloop/api-sdk"
 
 const api = createApiClient({
-  baseUrl: "http://localhost:8080/api/api-service",
+  baseUrl: "${API_SERVICE_BASE_URL}",
   apiKey: "your_api_key",
 })
 
@@ -326,7 +327,7 @@ try {
           Use hooks for logging, metrics, or custom header injection.
         </p>
         <CodeBlock title="JavaScript">{`const api = createApiClient({
-  baseUrl: "http://localhost:8080/api/api-service",
+  baseUrl: "${API_SERVICE_BASE_URL}",
   apiKey: "your_key",
   beforeRequest: (ctx) => {
     // ctx: { path, method, url, headers }
@@ -345,7 +346,7 @@ try {
         <CodeBlock title="JavaScript">{`import { createApiClient } from "@sigloop/api-sdk"
 
 const api = createApiClient({
-  baseUrl: "http://localhost:8080/api/api-service",
+  baseUrl: "${API_SERVICE_BASE_URL}",
   apiKey: process.env.SIGLOOP_API_KEY,
 })
 

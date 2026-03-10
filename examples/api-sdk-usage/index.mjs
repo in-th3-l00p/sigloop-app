@@ -2,7 +2,7 @@ import "dotenv/config"
 import { createApiClient } from "@sigloop/api"
 
 const api = createApiClient({
-  baseUrl: process.env.API_BASE_URL ?? "http://localhost:8080/api/api-service",
+  baseUrl: process.env.API_BASE_URL ?? "https://api.sigloop.online",
   apiKey: process.env.API_KEY ?? "sgapi_kuotx8f7psk8zcwnmmf2jxs4",
 })
 

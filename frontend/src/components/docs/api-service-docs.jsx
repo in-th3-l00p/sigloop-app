@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+import { API_SERVICE_BASE_URL } from "@/lib/integration-registry"
 import { CodeBlock, DocSection, DocSubSection, EndpointBlock } from "./code-block"
 
 export function ApiServiceDocs() {
@@ -19,7 +20,10 @@ export function ApiServiceDocs() {
       <Separator />
 
       <DocSection title="Base URL">
-        <CodeBlock>{`http://localhost:8080/api/api-service`}</CodeBlock>
+        <CodeBlock>{`${API_SERVICE_BASE_URL}`}</CodeBlock>
+        <p className="text-xs text-muted-foreground mt-2">
+          Set via <code className="bg-muted px-1 py-0.5 rounded">VITE_API_SERVICE_URL</code> environment variable.
+        </p>
       </DocSection>
 
       <DocSection title="Authentication">

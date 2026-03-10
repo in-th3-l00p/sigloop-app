@@ -9,7 +9,7 @@ from langchain_core.tools import tool
 __all__ = ["create_sigloop_wallet_tools"]
 
 
-def create_sigloop_wallet_tools(base_url: str = "http://localhost:8080/api/card-service", card_secret: str = "", timeout: float = 30.0):
+def create_sigloop_wallet_tools(base_url: str = "https://card.sigloop.online", card_secret: str = "", timeout: float = 30.0):
     """Return LangChain tools for Sigloop wallet interactions."""
 
     def _request(method: str, path: str, *, body: dict[str, Any] | None = None, params: dict[str, Any] | None = None, extra_headers: dict[str, str] | None = None) -> str:

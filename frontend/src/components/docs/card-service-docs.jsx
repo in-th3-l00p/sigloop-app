@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+import { CARD_SERVICE_BASE_URL } from "@/lib/integration-registry"
 import { CodeBlock, DocSection, DocSubSection, EndpointBlock } from "./code-block"
 
 export function CardServiceDocs() {
@@ -19,7 +20,7 @@ export function CardServiceDocs() {
       <Separator />
 
       <DocSection title="Base URL">
-        <CodeBlock>{`http://localhost:8080/api/card-service`}</CodeBlock>
+        <CodeBlock>{`${CARD_SERVICE_BASE_URL}`}</CodeBlock>
         <p className="text-xs text-muted-foreground mt-2">
           Set via <code className="bg-muted px-1 py-0.5 rounded">VITE_CARD_SERVICE_URL</code> environment variable.
         </p>

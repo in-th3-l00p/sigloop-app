@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+import { API_SERVICE_BASE_URL, CARD_SERVICE_BASE_URL } from "@/lib/integration-registry"
 import { CodeBlock, DocSection, DocSubSection } from "./code-block"
 
 export function GeneralDocs() {
@@ -70,7 +71,7 @@ export function GeneralDocs() {
             This scopes the agent to only that card's balance, limits, and policies.
           </p>
           <CodeBlock title="Card Service Auth">{`curl -H "x-card-secret: sgl_your_card_secret" \\
-  http://localhost:8080/api/card-service/v1/card/me`}</CodeBlock>
+  ${CARD_SERVICE_BASE_URL}/v1/card/me`}</CodeBlock>
         </DocSubSection>
         <DocSubSection title="API Service (x-api-key)">
           <p className="text-sm text-muted-foreground">
@@ -78,7 +79,7 @@ export function GeneralDocs() {
             in the <code className="text-xs bg-muted px-1 py-0.5 rounded">x-api-key</code> header.
           </p>
           <CodeBlock title="API Service Auth">{`curl -H "x-api-key: your_api_key" \\
-  http://localhost:8080/api/api-service/v1/accounts`}</CodeBlock>
+  ${API_SERVICE_BASE_URL}/v1/accounts`}</CodeBlock>
         </DocSubSection>
       </DocSection>
 

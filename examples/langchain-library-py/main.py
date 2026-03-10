@@ -17,7 +17,7 @@ load_dotenv(".env.local")
 load_dotenv()
 
 tools = create_sigloop_wallet_tools(
-    base_url=os.getenv("SIGLOOP_CARD_SERVICE_URL", "http://localhost:8080/api/card-service"),
+    base_url=os.getenv("SIGLOOP_CARD_SERVICE_URL", "https://card.sigloop.online"),
     card_secret=os.getenv("SIGLOOP_CARD_SECRET", ""),
 )
 

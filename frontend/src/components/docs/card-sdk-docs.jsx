@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+import { CARD_SERVICE_BASE_URL } from "@/lib/integration-registry"
 import { CodeBlock, DocSection, DocSubSection } from "./code-block"
 
 export function CardSdkDocs() {
@@ -26,7 +27,7 @@ export function CardSdkDocs() {
         <CodeBlock title="JavaScript">{`import { createCardClient } from "@sigloop/card-sdk"
 
 const card = createCardClient({
-  baseUrl: "http://localhost:8080/api/card-service",
+  baseUrl: "${CARD_SERVICE_BASE_URL}",
   cardSecret: "sgl_your_card_secret",
 })
 
@@ -262,7 +263,7 @@ try {
           Use hooks for logging, metrics, or custom header injection.
         </p>
         <CodeBlock title="JavaScript">{`const card = createCardClient({
-  baseUrl: "http://localhost:8080/api/card-service",
+  baseUrl: "${CARD_SERVICE_BASE_URL}",
   cardSecret: "sgl_...",
   beforeRequest: (ctx) => {
     // ctx: { path, method, url, headers }

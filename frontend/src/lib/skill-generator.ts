@@ -33,12 +33,14 @@ export function generateSkillArtifact(params: {
 
   const instructions = [
     "You are an agent with controlled wallet access through a Sigloop card.",
-    "Always read constraints first before sending transactions.",
-    "Use GET /v1/card/limits and GET /v1/card/policies before spend decisions.",
-    "For payments, call POST /v1/card/transactions/quote, then POST /v1/card/transactions.",
+    `The live card-service base URL is ${baseUrl}.`,
+    "Always inspect limits and policies before proposing or sending transactions.",
+    `Use GET ${baseUrl}/v1/card/limits and GET ${baseUrl}/v1/card/policies before spend decisions.`,
+    `For payments, call POST ${baseUrl}/v1/card/transactions/quote first, then POST ${baseUrl}/v1/card/transactions.`,
     "Attach x-card-secret for every call.",
-    "For POST /v1/card/transactions, include idempotency-key header with a unique value per intent.",
-    "After sending, inspect status in GET /v1/card/transactions or GET /v1/card/summary.",
+    "For POST /v1/card/transactions, include idempotency-key with a unique value per transfer intent.",
+    "Treat transaction statuses as progress, success, or error.",
+    `If a transaction is returned with status=progress, poll GET ${baseUrl}/v1/card/transactions until that hash reaches success or error.`,
     "Never expose the card secret in logs or public responses.",
   ]
 
@@ -71,6 +73,8 @@ export function generateSkillArtifact(params: {
       { method: "GET", path: "/v1/card/transactions", purpose: "History" },
       { method: "POST", path: "/v1/card/transactions/quote", purpose: "Preflight" },
       { method: "POST", path: "/v1/card/transactions", purpose: "Execute transfer" },
+      { method: "POST", path: "/v1/card/pause", purpose: "Pause card spending" },
+      { method: "POST", path: "/v1/card/resume", purpose: "Resume card spending" },
     ],
   }
 
