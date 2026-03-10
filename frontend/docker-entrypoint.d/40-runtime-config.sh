@@ -7,7 +7,7 @@ cat > "$CONFIG_PATH" <<EOF
 window.__SIGLOOP_CONFIG__ = {
   VITE_CONVEX_URL: "${VITE_CONVEX_URL:-}",
   VITE_PRIVY_APP_ID: "${VITE_PRIVY_APP_ID:-}",
-  VITE_CARD_SERVICE_URL: "${VITE_CARD_SERVICE_URL:-https://card.sigloop.online}",
+  VITE_CARD_SERVICE_URL: "${VITE_CARD_SERVICE_URL:-https://cards.sigloop.online}",
   VITE_API_SERVICE_URL: "${VITE_API_SERVICE_URL:-https://api.sigloop.online}"
 }
 EOF

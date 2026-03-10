@@ -1,4 +1,4 @@
-export const DEFAULT_CARD_SERVICE_BASE_URL = "https://card.sigloop.online"
+export const DEFAULT_CARD_SERVICE_BASE_URL = "https://cards.sigloop.online"
 export const DEFAULT_API_SERVICE_BASE_URL = "https://api.sigloop.online"
 
 export const CARD_SERVICE_BASE_URL =

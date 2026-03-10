@@ -3,7 +3,7 @@
   "schemaVersion": 2,
   "platform": "openclaw",
   "toolContract": {
-    "baseUrl": "https://card.sigloop.online",
+    "baseUrl": "https://cards.sigloop.online",
     "authHeader": "x-card-secret"
   }
 }

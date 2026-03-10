@@ -2,7 +2,7 @@ import { z } from "zod"
 import { tool } from "@langchain/core/tools"
 
 export function createSigloopWalletTools({
-  baseUrl = "https://card.sigloop.online",
+  baseUrl = "https://cards.sigloop.online",
   cardSecret = "",
   timeoutMs = 30000,
 } = {}) {

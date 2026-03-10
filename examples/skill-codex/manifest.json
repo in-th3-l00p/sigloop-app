@@ -3,7 +3,7 @@
   "schemaVersion": 2,
   "platform": "codex",
   "toolContract": {
-    "baseUrl": "https://card.sigloop.online",
+    "baseUrl": "https://cards.sigloop.online",
     "authHeader": "x-card-secret",
     "endpoints": [
       "GET /v1/card/me",
