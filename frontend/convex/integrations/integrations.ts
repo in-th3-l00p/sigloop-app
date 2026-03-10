@@ -150,3 +150,73 @@ export const updateConfig = mutation({
     return { ...integration, config: mergedConfig }
   },
 })
+
+export const publishSkillArtifact = mutation({
+  args: {
+    id: v.id("integrations"),
+    slug: v.string(),
+    artifactJson: v.string(),
+    bootstrapPrompt: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const userId = await requireAuth(ctx, "integrations.publishSkillArtifact")
+    const integration = await ctx.db.get(args.id)
+    if (!integration || integration.userId !== userId) {
+      throw new Error("Integration not found")
+    }
+    if (integration.type !== "skill") {
+      throw new Error("Only skill integrations can be published")
+    }
+
+    const existing = await ctx.db
+      .query("integrations")
+      .withIndex("by_public_skill_slug", (q) => q.eq("publicSkillSlug", args.slug))
+      .unique()
+
+    if (existing && existing._id !== args.id) {
+      throw new Error("Public skill slug already exists")
+    }
+
+    const updatedAt = Date.now()
+
+    await ctx.db.patch(args.id, {
+      publicSkillSlug: args.slug,
+      publicSkillArtifactJson: args.artifactJson,
+      publicSkillPrompt: args.bootstrapPrompt,
+      publicSkillPublishedAt: updatedAt,
+      updatedAt,
+      status: integration.status === "verified" ? "verified" : "configured",
+    })
+
+    return {
+      ...integration,
+      publicSkillSlug: args.slug,
+      publicSkillArtifactJson: args.artifactJson,
+      publicSkillPrompt: args.bootstrapPrompt,
+      publicSkillPublishedAt: updatedAt,
+    }
+  },
+})
+
+export const getPublicSkillArtifactBySlug = query({
+  args: { slug: v.string() },
+  handler: async (ctx, args) => {
+    const integration = await ctx.db
+      .query("integrations")
+      .withIndex("by_public_skill_slug", (q) => q.eq("publicSkillSlug", args.slug))
+      .unique()
+
+    if (!integration?.publicSkillArtifactJson) {
+      return null
+    }
+
+    return {
+      slug: integration.publicSkillSlug,
+      prompt: integration.publicSkillPrompt,
+      publishedAt: integration.publicSkillPublishedAt,
+      artifactJson: integration.publicSkillArtifactJson,
+      integrationName: integration.name,
+      product: integration.config?.skillProduct ?? "codex",
+    }
+  },
+})

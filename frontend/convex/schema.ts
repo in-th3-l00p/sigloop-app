@@ -73,6 +73,10 @@ export default defineSchema({
     schemaVersion: v.float64(),
     verificationMessage: v.optional(v.string()),
     verifiedAt: v.optional(v.float64()),
+    publicSkillSlug: v.optional(v.string()),
+    publicSkillArtifactJson: v.optional(v.string()),
+    publicSkillPrompt: v.optional(v.string()),
+    publicSkillPublishedAt: v.optional(v.float64()),
     config: v.optional(v.object({
       secretRef: v.optional(v.string()),
       language: v.optional(v.string()),
@@ -92,7 +96,8 @@ export default defineSchema({
     .index("by_card", ["cardId"])
     .index("by_type", ["type"])
     .index("by_platform", ["platform"])
-    .index("by_card_preset", ["cardId", "presetId"]),
+    .index("by_card_preset", ["cardId", "presetId"])
+    .index("by_public_skill_slug", ["publicSkillSlug"]),
 
   apiKeys: defineTable({
     userId: v.string(),

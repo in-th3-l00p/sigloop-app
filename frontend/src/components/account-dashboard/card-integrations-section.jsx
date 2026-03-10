@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useMutation, useQuery } from "convex/react"
 import { api } from "../../../convex/_generated/api"
 import { ExternalLink, Download, Copy, Check, Trash2, BookOpen } from "lucide-react"
@@ -24,7 +24,7 @@ import {
 } from "@/lib/integration-registry"
 import { CARD_SERVICE_BASE_URL } from "@/lib/service-urls"
 import { CreateIntegrationDialog } from "./create-integration-dialog"
-import { downloadLangChainBundle, downloadSkillBundle } from "@/lib/integration-artifacts"
+import { createSkillArtifactPayload, downloadLangChainBundle, downloadSkillBundle } from "@/lib/integration-artifacts"
 import {
   Dialog,
   DialogContent,
@@ -86,6 +86,18 @@ function resolveIntegrationText(preset, integration) {
   }
 }
 
+function buildPublicSkillUrl(slug) {
+  if (!slug || typeof window === "undefined") return ""
+  const basePath = import.meta.env.BASE_URL || "/"
+  return new URL(`skills/${slug}`, window.location.origin + basePath).toString()
+}
+
+function createPublicSkillSlug(integrationId, skillProduct) {
+  const safeId = String(integrationId).replace(/[^a-zA-Z0-9_-]/g, "").toLowerCase()
+  const randomPart = crypto.randomUUID().slice(0, 8)
+  return `skill-${skillProduct}-${safeId}-${randomPart}`
+}
+
 function IntegrationDrawerContent({
   integration,
   preset,
@@ -93,9 +105,11 @@ function IntegrationDrawerContent({
   cardContext,
   onSetupInteraction,
   onRemove,
+  onPublishSkillArtifact,
 }) {
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [isDownloading, setIsDownloading] = useState(false)
+  const [isPublishing, setIsPublishing] = useState(false)
 
   const skillProduct = integration?.config?.skillProduct === "claude"
     ? "claude"
@@ -107,11 +121,59 @@ function IntegrationDrawerContent({
   const docsUrl = skillDocs?.url || preset.docsUrl
   const docsLabel = skillDocs?.label || preset.docsLabel || "Docs"
   const platformText = resolveIntegrationText(preset, integration)
+  const publicSkillUrl = integration?.publicSkillSlug ? buildPublicSkillUrl(integration.publicSkillSlug) : ""
+  const bootstrapPrompt = integration?.publicSkillPrompt || ""
+
+  const ensureSkillPublished = async () => {
+    if (integration.type !== "skill" || !cardSecret) return null
+    if (integration.publicSkillSlug && integration.publicSkillPrompt) {
+      return {
+        publicUrl: buildPublicSkillUrl(integration.publicSkillSlug),
+        prompt: integration.publicSkillPrompt,
+      }
+    }
+
+    setIsPublishing(true)
+    try {
+      const slug = createPublicSkillSlug(integration._id, skillProduct)
+      const publicUrl = buildPublicSkillUrl(slug)
+      const payload = createSkillArtifactPayload({
+        skillProduct,
+        preset,
+        cardSecret,
+        cardContext,
+        baseUrl: integration?.config?.endpointBaseUrl || CARD_SERVICE_BASE_URL,
+        publicUrl,
+      })
+
+      await onPublishSkillArtifact({
+        id: integration._id,
+        slug,
+        artifactJson: JSON.stringify(payload),
+        bootstrapPrompt: payload.bootstrapPrompt,
+      })
+      await onSetupInteraction(integration._id)
+
+      return {
+        publicUrl,
+        prompt: payload.bootstrapPrompt,
+      }
+    } finally {
+      setIsPublishing(false)
+    }
+  }
+
+  useEffect(() => {
+    if (integration.type === "skill" && cardSecret && !integration.publicSkillSlug && !isPublishing) {
+      void ensureSkillPublished()
+    }
+  }, [integration.type, cardSecret, integration.publicSkillSlug, isPublishing])
 
   const handleSkillDownload = async () => {
     if (!cardSecret || isDownloading) return
     setIsDownloading(true)
     try {
+      await ensureSkillPublished()
       await downloadSkillBundle({
         skillProduct,
         preset,
@@ -177,14 +239,25 @@ function IntegrationDrawerContent({
         </div>
 
         {integration.type === "skill" && (
-          <Button
-            className="cursor-pointer gap-1.5"
-            disabled={!cardSecret || isDownloading}
-            onClick={handleSkillDownload}
-          >
-            <Download className="h-3.5 w-3.5" />
-            {isDownloading ? "Preparing..." : "Download Skill Bundle"}
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              className="cursor-pointer gap-1.5"
+              disabled={!cardSecret || isDownloading}
+              onClick={handleSkillDownload}
+            >
+              <Download className="h-3.5 w-3.5" />
+              {isDownloading ? "Preparing..." : "Download Skill Bundle"}
+            </Button>
+            <Button
+              variant="outline"
+              className="cursor-pointer gap-1.5"
+              disabled={!cardSecret || isPublishing}
+              onClick={() => void ensureSkillPublished()}
+            >
+              <ExternalLink className="h-3.5 w-3.5" />
+              {isPublishing ? "Publishing..." : publicSkillUrl ? "Refresh Public Install Link" : "Create Public Install Link"}
+            </Button>
+          </div>
         )}
 
         {integration.type === "library" && (
@@ -244,6 +317,8 @@ function IntegrationDrawerContent({
         {platformText.env ? <CopyBlock title="Env" value={platformText.env} onAction={() => onSetupInteraction(integration._id)} /> : null}
         {platformText.install ? <CopyBlock title="Install" value={platformText.install} onAction={() => onSetupInteraction(integration._id)} /> : null}
         {platformText.snippet ? <CopyBlock title="Snippet" value={platformText.snippet} onAction={() => onSetupInteraction(integration._id)} /> : null}
+        {integration.type === "skill" && publicSkillUrl ? <CopyBlock title="Public install link" value={publicSkillUrl} onAction={() => onSetupInteraction(integration._id)} /> : null}
+        {integration.type === "skill" && bootstrapPrompt ? <CopyBlock title="Bootstrap prompt" value={bootstrapPrompt} onAction={() => onSetupInteraction(integration._id)} /> : null}
 
         {integration.verificationMessage && (
           <p className="text-xs text-muted-foreground">Last verification: {integration.verificationMessage}</p>
@@ -300,6 +375,7 @@ export function CardIntegrationsSection({ cardId, cardSecret, card, chain, accou
   const integrations = useQuery(api.integrations.integrations.listByCard, { cardId })
   const recordSetupInteraction = useMutation(api.integrations.integrations.recordSetupInteraction)
   const removeIntegration = useMutation(api.integrations.integrations.remove)
+  const publishSkillArtifact = useMutation(api.integrations.integrations.publishSkillArtifact)
 
   const selectedIntegration = useMemo(
     () => integrations?.find((integration) => integration._id === selectedIntegrationId) ?? null,
@@ -386,6 +462,7 @@ export function CardIntegrationsSection({ cardId, cardSecret, card, chain, accou
                 cardContext={cardContext}
                 onSetupInteraction={(id) => recordSetupInteraction({ id })}
                 onRemove={handleRemove}
+                onPublishSkillArtifact={(input) => publishSkillArtifact(input)}
               />
             )}
           </DrawerContent>

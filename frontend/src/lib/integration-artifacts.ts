@@ -28,6 +28,16 @@ type CardContext = {
 }
 
 type ArtifactFile = { path: string; content: string }
+type SkillArtifactPayload = {
+  version: 1
+  product: SkillProduct
+  publicUrl: string
+  publishedAt: string
+  wallet: CardContext
+  apiBaseUrl: string
+  bootstrapPrompt: string
+  files: ArtifactFile[]
+}
 
 function triggerBlobDownload(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob)
@@ -245,6 +255,32 @@ function buildSkillExamples(cardSecret: string, baseUrl: string) {
   ].join("\n")
 }
 
+function buildBootstrapPrompt(params: {
+  product: SkillProduct
+  publicUrl: string
+  cardContext: CardContext
+  baseUrl: string
+}) {
+  const { product, publicUrl, cardContext, baseUrl } = params
+  const productLabel = product === "openclaw" ? "OpenClaw" : product === "claude" ? "Claude" : "Codex"
+
+  return [
+    `Install and use the Sigloop ${productLabel} card skill from this public URL: ${publicUrl}`,
+    "",
+    "Instructions:",
+    `1. Open the URL and read the published skill package for the assigned Sigloop card.`,
+    "2. Treat the package as the source of truth for the wallet metadata, policies, API contract, and transaction rules.",
+    "3. Use the documented card-service endpoints and never expose the card secret.",
+    "4. Before sending funds, inspect limits and policies, then quote, then send with a unique idempotency key.",
+    "5. If a transaction returns progress, keep checking transaction history until it becomes success or error.",
+    "",
+    "Assigned card context:",
+    buildWalletSnapshot(cardContext),
+    "",
+    `Card-service base URL: ${baseUrl}`,
+  ].join("\n")
+}
+
 function buildSkillManifest(params: {
   product: SkillProduct
   preset: IntegrationPreset
@@ -327,6 +363,41 @@ function buildSkillFiles(params: {
       content: `SIGLOOP_CARD_SERVICE_URL=${baseUrl}\nSIGLOOP_CARD_SECRET=${cardSecret}\n`,
     },
   ] satisfies ArtifactFile[]
+}
+
+export function createSkillArtifactPayload(params: {
+  skillProduct: SkillProduct
+  preset: IntegrationPreset
+  cardSecret: string
+  cardContext: CardContext
+  baseUrl: string
+  publicUrl: string
+}): SkillArtifactPayload {
+  const files = buildSkillFiles({
+    product: params.skillProduct,
+    preset: params.preset,
+    cardSecret: params.cardSecret,
+    cardContext: params.cardContext,
+    baseUrl: params.baseUrl,
+  })
+
+  const bootstrapPrompt = buildBootstrapPrompt({
+    product: params.skillProduct,
+    publicUrl: params.publicUrl,
+    cardContext: params.cardContext,
+    baseUrl: params.baseUrl,
+  })
+
+  return {
+    version: 1,
+    product: params.skillProduct,
+    publicUrl: params.publicUrl,
+    publishedAt: new Date().toISOString(),
+    wallet: params.cardContext,
+    apiBaseUrl: params.baseUrl,
+    bootstrapPrompt,
+    files,
+  }
 }
 
 function buildLangChainSystemPrompt(baseUrl: string, cardContext: CardContext) {
@@ -699,8 +770,15 @@ export async function downloadSkillBundle(params: {
   cardContext: CardContext
   baseUrl: string
 }) {
-  const files = buildSkillFiles({ ...params, product: params.skillProduct })
-  await downloadZip(`${params.skillProduct}-sigloop-skill.zip`, files)
+  const payload = createSkillArtifactPayload({
+    skillProduct: params.skillProduct,
+    preset: params.preset,
+    cardSecret: params.cardSecret,
+    cardContext: params.cardContext,
+    baseUrl: params.baseUrl,
+    publicUrl: params.baseUrl,
+  })
+  await downloadZip(`${params.skillProduct}-sigloop-skill.zip`, payload.files)
 }
 
 export async function downloadLangChainBundle(params: {

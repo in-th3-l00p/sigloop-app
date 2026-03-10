@@ -8,6 +8,7 @@ import ApiDashboardPage from "@/pages/api-dashboard"
 import DocsPage from "@/pages/docs"
 import StatsPage from "@/pages/stats"
 import LogsPage from "@/pages/logs"
+import PublicSkillPage from "@/pages/public-skill"
 
 function App() {
   const { ready } = usePrivy()
@@ -30,6 +31,7 @@ function App() {
       <Route path="/dashboard" element={<DashboardPage />} />
       <Route path="/api" element={<ApiDashboardPage />} />
       <Route path="/docs" element={<DocsPage />} />
+      <Route path="/skills/:slug" element={<PublicSkillPage />} />
       <Route path="/stats" element={<StatsPage />} />
       <Route path="/logs" element={<LogsPage />} />
       <Route path="/dashboard/:accountId" element={<AccountDashboardPage />} />
