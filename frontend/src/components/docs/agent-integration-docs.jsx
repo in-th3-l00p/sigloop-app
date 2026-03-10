@@ -159,7 +159,7 @@ export function AgentIntegrationDocs() {
               </tr>
               <tr>
                 <td className="px-3 py-2 font-mono text-xs">escalationPolicy</td>
-                <td className="px-3 py-2 text-xs">What to do when uncertain (e.g., "Pause and notify owner if tx value > 0.5 ETH")</td>
+                <td className="px-3 py-2 text-xs">What to do when uncertain (e.g., "Pause and notify owner if tx value {">"} 0.5 ETH")</td>
               </tr>
             </tbody>
           </table>
